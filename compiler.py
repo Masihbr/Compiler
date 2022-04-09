@@ -8,4 +8,6 @@ from scanner import Scanner
 if __name__ == '__main__':
     scanner = Scanner()
     while True:
-        scanner.get_next_token()
+        token = scanner.get_next_token()
+        if token is None:
+            break
