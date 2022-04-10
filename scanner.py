@@ -59,7 +59,7 @@ class Scanner:
             if token_type:
                 token = self.code[self.start_cursor:self.end_cursor]
                 if token_type not in [TokenType.WHITESPACE, TokenType.COMMENT]:
-                    self.tokens[self.lineno].append((token_type.value, token))
+                    self.tokens[self.lineno].append(f"({token_type.value}, {token})")
                 self.start_cursor = self.end_cursor
                 self.state = 0
                 return token_type, token
@@ -225,23 +225,24 @@ class Scanner:
     def log_error(self, error):
         invalid_string = self.code[self.start_cursor:self.end_cursor]
         if error == LexicalError.INVALID_INPUT:
-            self.errors[self.lineno].append((invalid_string, error.value))
+            self.errors[self.lineno].append(f"({invalid_string}, {error.value})")
         elif error == LexicalError.UNCLOSED_COMMENT:
             self.errors[self.lineno].append(
-                (f'{invalid_string[:10]}...', error.value))
+                f"({invalid_string[:10]}..., {error.value})")
         elif error == LexicalError.UNMATCHED_COMMENT:
-            self.errors[self.lineno].append((invalid_string, error.value))
+            self.errors[self.lineno].append(f"({invalid_string}, {error.value})")
         elif error == LexicalError.INVALID_NUMBER:
-            self.errors[self.lineno].append((invalid_string, error.value))
+            self.errors[self.lineno].append(f"({invalid_string}, {error.value})")
 
     @staticmethod
     def general_to_string(dict_data) -> str:
         result = ""
+        print(dict_data)
         if len(dict_data) == 0: 
             # need another function
             return "There is no lexical error."
         for key, value in dict_data.items():
-            string = (' '.join(map(str, value))).replace("\'", "")
+            string = ' '.join(map(str, value))
             result += f"{key}.\t{string}\n"
         return result
 
