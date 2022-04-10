@@ -68,17 +68,18 @@ class Scanner:
         pprint.pprint(self.errors)
 
     def set_next_state(self, char):
+        # Initial state
         if self.state == 0:
             if char.isdigit():
-                self.state = 1
+                self.state = 1 # Number
             elif char.isalpha():
-                self.state = 5
+                self.state = 5 # Letter (ID, Keyword)
             elif char == '/':
-                self.state = 7
+                self.state = 7 # /* comment */
             elif char == '#':
-                self.state = 11
+                self.state = 11 # #comment
             elif char in WHITESPACES:
-                self.state = 13
+                self.state = 13 
             elif char in SINGLE_SYMBOLS:
                 self.state = 14
             elif char == '*':
@@ -87,6 +88,7 @@ class Scanner:
                 self.state = 18
             else:
                 return LexicalError.INVALID_INPUT
+        # Number no dot state
         elif self.state == 1:
             if char.isdigit():
                 self.state = 1
@@ -96,11 +98,13 @@ class Scanner:
                 self.state = 4
             else:
                 return LexicalError.INVALID_NUMBER
+        # Number with dot initial state
         elif self.state == 2:
             if char.isdigit():
-                self.state = 3
+                self.state = 3 # should visit digit after dot
             else:
                 return LexicalError.INVALID_NUMBER
+        # Number with dot state
         elif self.state == 3:
             if char.isdigit():
                 self.state = 3
@@ -108,6 +112,7 @@ class Scanner:
                 self.state = 4
             else:
                 return LexicalError.INVALID_NUMBER
+        # ID, Keyword state    
         elif self.state == 5:
             if char.isalnum():
                 self.state = 5
@@ -115,27 +120,32 @@ class Scanner:
                 self.state = 6
             else:
                 return LexicalError.INVALID_INPUT
+        # /* comment */ state
         elif self.state == 7:
             if char == '*':
                 self.state = 8
             else:
                 self.end_cursor -= 1
                 return LexicalError.INVALID_INPUT
+        # /* comment */ state
         elif self.state == 8:
             if char == '*':
                 self.state = 9
             else:
                 self.state = 8
+        # /* comment */ state
         elif self.state == 9:
             if char == '/':
                 self.state = 10
             else:
                 self.state = 8
+        # #comment state
         elif self.state == 11:
             if char == '\n':
                 self.state = 12
             else:
                 self.state = 11
+        # */** state
         elif self.state == 15:
             if char == '*':
                 self.state = 16
@@ -145,6 +155,7 @@ class Scanner:
                 self.state = 17
             else:
                 return LexicalError.INVALID_INPUT
+        # =/== state
         elif self.state == 18:
             if char == '=':
                 self.state = 19
@@ -154,23 +165,30 @@ class Scanner:
                 return LexicalError.INVALID_INPUT
 
     def check_final_states(self):
+        # Number with dot final state
         if self.state == 4:
             self.end_cursor -= 1
             return TokenType.NUMBER
+        # ID, Keyword final state
         elif self.state == 6:
             self.end_cursor -= 1
             return TokenType.ID_KEYWORD
+        # /* comment */ final state
         elif self.state == 10:
             return TokenType.COMMENT
+        # #comment final state
         elif self.state == 12:
             self.end_cursor -= 1
             return TokenType.COMMENT
+        # WHITESPACE final state
         elif self.state == 13:
             if self.code[self.start_cursor:self.end_cursor] == '\n':
                 self.end_line += 1
             return TokenType.WHITESPACE
+        # SYMBOL final state
         elif self.state in [14, 16, 19]:
             return TokenType.SYMBOL
+        # SYMBOL final state (curser back)
         elif self.state in [17, 20]:
             self.end_cursor -= 1
             return TokenType.SYMBOL
