@@ -40,7 +40,7 @@ class Scanner:
         self.errors = defaultdict(list)
 
     def get_next_token(self):
-        while self.start_cursor < len(self.code):
+        while self.end_cursor < len(self.code):
             char = self.code[self.end_cursor]
             self.end_cursor += 1
 
