@@ -38,6 +38,7 @@ class Scanner:
 
         self.tokens = defaultdict(list)
         self.errors = defaultdict(list)
+        self.symbols = list(KEYWORDS)
 
     def get_next_token(self):
         while self.end_cursor < len(self.code):
@@ -64,6 +65,7 @@ class Scanner:
 
         pprint.pprint(self.tokens)
         pprint.pprint(self.errors)
+        pprint.pprint(self.symbols)
 
     def set_next_state(self, char):
         # Initial state
@@ -170,6 +172,12 @@ class Scanner:
             else:
                 return LexicalError.INVALID_INPUT
 
+    def install_id(self, token: str) -> bool:
+        if token in self.symbols:
+            return False
+        self.symbols.append(token)
+        return True
+        
     def check_final_states(self):
         # Number with dot final state
         if self.state == 4:
@@ -182,6 +190,7 @@ class Scanner:
             if token in KEYWORDS:
                 return TokenType.KEYWORD
             else:
+                self.install_id(token)
                 return TokenType.ID
         # /* comment */ final state
         elif self.state == 10:
