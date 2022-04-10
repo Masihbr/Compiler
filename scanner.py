@@ -5,10 +5,11 @@ from collections import defaultdict
 
 class TokenType(enum.Enum):
     NUMBER = 1
-    ID_KEYWORD = 2
-    SYMBOL = 3
-    COMMENT = 4
-    WHITESPACE = 5
+    ID = 2
+    KEYWORD = 3
+    SYMBOL = 4
+    COMMENT = 5
+    WHITESPACE = 6
 
 
 class LexicalError(enum.Enum):
@@ -20,7 +21,7 @@ class LexicalError(enum.Enum):
 
 WHITESPACES = [' ', '\n', '\r', '\t', '\v', '\f']
 SINGLE_SYMBOLS = [';', ':', ',', '[', ']', '(', ')', '+', '-', '<']
-
+KEYWORDS = ("break", "continue", "def", "else", "if", "return", "while")
 
 class Scanner:
     input_filename = 'input.txt'
@@ -177,7 +178,11 @@ class Scanner:
         # ID, Keyword final state
         elif self.state == 6:
             self.end_cursor -= 1
-            return TokenType.ID_KEYWORD
+            token = self.code[self.start_cursor:self.end_cursor]
+            if token in KEYWORDS:
+                return TokenType.KEYWORD
+            else:
+                return TokenType.ID
         # /* comment */ final state
         elif self.state == 10:
             return TokenType.COMMENT
