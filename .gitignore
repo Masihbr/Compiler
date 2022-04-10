@@ -4,10 +4,10 @@ __pycache__/
 *$py.class
 
 # tests files
-input.txt
-lexical_errors.txt
-symbol_table.txt
-tokens.txt
+*.txt
+
+# quera file
+*.zip
 
 # C extensions
 *.so
