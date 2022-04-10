@@ -237,7 +237,8 @@ class Scanner:
     @staticmethod
     def general_to_string(dict_data) -> str:
         result = ""
-        if len(data_dict) == 0: # need another function
+        if len(dict_data) == 0: 
+            # need another function
             return "There is no lexical error."
         for key, value in dict_data.items():
             string = (' '.join(map(str, value))).replace("\'", "")
