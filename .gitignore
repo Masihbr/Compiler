@@ -3,6 +3,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# tests files
+input.txt
+lexical_errors.txt
+symbol_table.txt
+tokens.txt
+
 # C extensions
 *.so
 
