@@ -1,6 +1,9 @@
 import enum
+from ntpath import join
 import pprint
 from collections import defaultdict
+
+from file_handler import FileHandler
 
 
 class TokenType(enum.Enum):
@@ -23,12 +26,13 @@ WHITESPACES = [' ', '\n', '\r', '\t', '\v', '\f']
 SINGLE_SYMBOLS = [';', ':', ',', '[', ']', '(', ')', '+', '-', '<']
 KEYWORDS = ("break", "continue", "def", "else", "if", "return", "while")
 
+
 class Scanner:
     input_filename = 'input.txt'
 
     def __init__(self):
-        with open(self.input_filename, 'r') as input_file:
-            self.code = input_file.read()
+        self.file_handler = FileHandler()
+        self.code = self.file_handler.read_all()
 
         self.lineno = 1
         self.start_cursor = 0
@@ -43,7 +47,7 @@ class Scanner:
     def get_next_token(self):
         while self.end_cursor < len(self.code):
             char = self.code[self.end_cursor]
-            self.end_cursor += 1 # now char is self.code[self.end_cursor - 1]
+            self.end_cursor += 1  # now char is self.code[self.end_cursor - 1]
 
             error = self.set_next_state(char)
             if error:
@@ -62,25 +66,32 @@ class Scanner:
 
         if self.state == 8:
             self.log_error(LexicalError.UNCLOSED_COMMENT)
-
-        pprint.pprint(self.tokens)
-        pprint.pprint(self.errors)
-        pprint.pprint(self.symbols)
+        """
+        print(self.general_to_string(self.errors))
+        print(self.general_to_string(self.tokens))
+        print(self.symbols_to_string(self.symbols))
+        """
+        self.file_handler.write(address="tokens",
+                           string=self.general_to_string(self.tokens))
+        self.file_handler.write(address="lexical_errors",
+                           string=self.general_to_string(self.errors))
+        self.file_handler.write(address="symbol_table",
+                           string=self.symbols_to_string(self.symbols))
 
     def set_next_state(self, char):
         # Initial state
         if self.state == 0:
             if char.isdigit():
-                self.state = 1 # Number
+                self.state = 1  # Number
             elif char.isalpha():
-                self.state = 5 # Letter (ID, Keyword)
+                self.state = 5  # Letter (ID, Keyword)
             elif char == '/':
-                self.state = 7 # /* comment */
+                self.state = 7  # /* comment */
             elif char == '#':
-                self.state = 11 # #comment
+                self.state = 11  # comment
             elif char in WHITESPACES:
                 self.lineno += int(char == '\n')
-                self.state = 13 
+                self.state = 13
             elif char in SINGLE_SYMBOLS:
                 self.state = 14
             elif char == '*':
@@ -102,7 +113,7 @@ class Scanner:
         # Number with dot initial state
         elif self.state == 2:
             if char.isdigit():
-                self.state = 3 # should visit digit after dot
+                self.state = 3  # should visit digit after dot
             else:
                 return LexicalError.INVALID_NUMBER
         # Number with dot state
@@ -113,7 +124,7 @@ class Scanner:
                 self.state = 4
             else:
                 return LexicalError.INVALID_NUMBER
-        # ID, Keyword state    
+        # ID, Keyword state
         elif self.state == 5:
             if char.isalnum():
                 self.state = 5
@@ -148,7 +159,7 @@ class Scanner:
                 self.state = 11
         # WHITESPACE state
         elif self.state == 13:
-            self.lineno += int(char == '\n')    
+            self.lineno += int(char == '\n')
             if char in WHITESPACES:
                 self.state = 13
             else:
@@ -177,7 +188,7 @@ class Scanner:
             return False
         self.symbols.append(token)
         return True
-        
+
     def check_final_states(self):
         # Number with dot final state
         if self.state == 4:
@@ -216,8 +227,24 @@ class Scanner:
         if error == LexicalError.INVALID_INPUT:
             self.errors[self.lineno].append((invalid_string, error.value))
         elif error == LexicalError.UNCLOSED_COMMENT:
-            self.errors[self.lineno].append((f'{invalid_string[:10]}...', error.value))
+            self.errors[self.lineno].append(
+                (f'{invalid_string[:10]}...', error.value))
         elif error == LexicalError.UNMATCHED_COMMENT:
             self.errors[self.lineno].append((invalid_string, error.value))
         elif error == LexicalError.INVALID_NUMBER:
             self.errors[self.lineno].append((invalid_string, error.value))
+
+    def general_to_string(self, dict_data) -> str:
+        result = ""
+        for key, value in dict_data.items():
+            string = (' '.join(map(str, value))).replace("\'", "")
+            result += f"{key}.\t{string}\n" 
+        return result
+
+    def symbols_to_string(self, list_data) -> str:
+        result = ""
+        count = 1
+        for symbol in list_data:
+            result += f"{count}.\t{symbol}\n"
+            count += 1
+        return result
