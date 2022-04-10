@@ -76,6 +76,7 @@ class Scanner:
             elif char == '#':
                 self.state = 11 # #comment
             elif char in WHITESPACES:
+                self.lineno += int(char == '\n')
                 self.state = 13 
             elif char in SINGLE_SYMBOLS:
                 self.state = 14
@@ -144,7 +145,7 @@ class Scanner:
                 self.state = 11
         # WHITESPACE state
         elif self.state == 13:
-            self.lineno += int(self.code[self.end_cursor - 2] == '\n') + int(char == '\n')    
+            self.lineno += int(char == '\n')    
             if char in WHITESPACES:
                 self.state = 13
             else:
