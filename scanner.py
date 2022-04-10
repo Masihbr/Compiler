@@ -144,10 +144,7 @@ class Scanner:
                 self.state = 11
         # WHITESPACE state
         elif self.state == 13:
-            if self.code[self.end_cursor - 2] == '\n':
-                self.lineno += 1
-            if char == '\n':
-                self.lineno += 1    
+            self.lineno += int(self.code[self.end_cursor - 2] == '\n') + int(char == '\n')    
             if char in WHITESPACES:
                 self.state = 13
             else:
