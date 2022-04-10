@@ -1,6 +1,4 @@
 import enum
-from ntpath import join
-import pprint
 from collections import defaultdict
 
 from file_handler import FileHandler
@@ -72,11 +70,11 @@ class Scanner:
         print(self.symbols_to_string(self.symbols))
         """
         self.file_handler.write(address="tokens",
-                           string=self.general_to_string(self.tokens))
+                                string=self.general_to_string(self.tokens))
         self.file_handler.write(address="lexical_errors",
-                           string=self.general_to_string(self.errors))
+                                string=self.general_to_string(self.errors))
         self.file_handler.write(address="symbol_table",
-                           string=self.symbols_to_string(self.symbols))
+                                string=self.symbols_to_string(self.symbols))
 
     def set_next_state(self, char):
         # Initial state
@@ -234,14 +232,16 @@ class Scanner:
         elif error == LexicalError.INVALID_NUMBER:
             self.errors[self.lineno].append((invalid_string, error.value))
 
-    def general_to_string(self, dict_data) -> str:
+    @staticmethod
+    def general_to_string(dict_data) -> str:
         result = ""
         for key, value in dict_data.items():
             string = (' '.join(map(str, value))).replace("\'", "")
-            result += f"{key}.\t{string}\n" 
+            result += f"{key}.\t{string}\n"
         return result
 
-    def symbols_to_string(self, list_data) -> str:
+    @staticmethod
+    def symbols_to_string(list_data) -> str:
         result = ""
         count = 1
         for symbol in list_data:
