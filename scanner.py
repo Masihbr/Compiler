@@ -31,6 +31,8 @@ class Scanner:
     def __init__(self):
         self.file_handler = FileHandler()
         self.code = self.file_handler.read_all()
+        if self.code[-1] != '\n':
+            self.code += '\n'
 
         self.lineno = 1
         self.start_cursor = 0
