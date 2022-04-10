@@ -40,7 +40,8 @@ class Scanner:
         self.errors = defaultdict(list)
 
     def get_next_token(self):
-        for char in self.code[self.start_cursor:]:
+        while self.start_cursor < len(self.code):
+            char = self.code[self.end_cursor]
             self.end_cursor += 1
 
             error = self.set_next_state(char)
@@ -140,14 +141,14 @@ class Scanner:
                 self.state = 16
             elif char == '/':
                 return LexicalError.UNMATCHED_COMMENT
-            elif char in WHITESPACES or char in ['/', '#']:
+            elif char in WHITESPACES or char in ['/', '#'] or char.isalnum():
                 self.state = 17
             else:
                 return LexicalError.INVALID_INPUT
         elif self.state == 18:
             if char == '=':
                 self.state = 19
-            elif char in WHITESPACES or char in SINGLE_SYMBOLS or char in ['*', '/', '#']:
+            elif char in WHITESPACES or char in SINGLE_SYMBOLS or char in ['*', '/', '#'] or char.isalnum():
                 self.state = 20
             else:
                 return LexicalError.INVALID_INPUT
