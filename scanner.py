@@ -29,8 +29,7 @@ class Scanner:
         with open(self.input_filename, 'r') as input_file:
             self.code = input_file.read()
 
-        self.start_line = 1
-        self.end_line = 1
+        self.lineno = 1
         self.start_cursor = 0
         self.end_cursor = 0
 
@@ -42,22 +41,20 @@ class Scanner:
     def get_next_token(self):
         while self.end_cursor < len(self.code):
             char = self.code[self.end_cursor]
-            self.end_cursor += 1
+            self.end_cursor += 1 # now char is self.code[self.end_cursor - 1]
 
             error = self.set_next_state(char)
             if error:
                 self.log_error(error)
                 self.start_cursor = self.end_cursor
-                self.start_line = self.end_line
                 self.state = 0
 
             token_type = self.check_final_states()
             if token_type:
                 token = self.code[self.start_cursor:self.end_cursor]
                 if token_type not in [TokenType.WHITESPACE, TokenType.COMMENT]:
-                    self.tokens[self.start_line].append((token_type, token))
+                    self.tokens[self.lineno].append((token_type, token))
                 self.start_cursor = self.end_cursor
-                self.start_line = self.end_line
                 self.state = 0
                 return token_type, token
 
@@ -145,6 +142,16 @@ class Scanner:
                 self.state = 12
             else:
                 self.state = 11
+        # WHITESPACE state
+        elif self.state == 13:
+            if self.code[self.end_cursor - 2] == '\n':
+                self.lineno += 1
+            if char == '\n':
+                self.lineno += 1    
+            if char in WHITESPACES:
+                self.state = 13
+            else:
+                self.state = 21
         # */** state
         elif self.state == 15:
             if char == '*':
@@ -181,9 +188,8 @@ class Scanner:
             self.end_cursor -= 1
             return TokenType.COMMENT
         # WHITESPACE final state
-        elif self.state == 13:
-            if self.code[self.start_cursor:self.end_cursor] == '\n':
-                self.end_line += 1
+        elif self.state == 21:
+            self.end_cursor -= 1
             return TokenType.WHITESPACE
         # SYMBOL final state
         elif self.state in [14, 16, 19]:
@@ -196,10 +202,10 @@ class Scanner:
     def log_error(self, error):
         invalid_string = self.code[self.start_cursor:self.end_cursor]
         if error == LexicalError.INVALID_INPUT:
-            self.errors[self.start_line].append((invalid_string, error.value))
+            self.errors[self.lineno].append((invalid_string, error.value))
         elif error == LexicalError.UNCLOSED_COMMENT:
-            self.errors[self.start_line].append((f'{invalid_string[:10]}...', error.value))
+            self.errors[self.lineno].append((f'{invalid_string[:10]}...', error.value))
         elif error == LexicalError.UNMATCHED_COMMENT:
-            self.errors[self.start_line].append((invalid_string, error.value))
+            self.errors[self.lineno].append((invalid_string, error.value))
         elif error == LexicalError.INVALID_NUMBER:
-            self.errors[self.start_line].append((invalid_string, error.value))
+            self.errors[self.lineno].append((invalid_string, error.value))
