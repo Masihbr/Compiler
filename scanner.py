@@ -4,12 +4,12 @@ from collections import defaultdict
 
 
 class TokenType(enum.Enum):
-    NUMBER = 1
-    ID = 2
-    KEYWORD = 3
-    SYMBOL = 4
-    COMMENT = 5
-    WHITESPACE = 6
+    NUMBER = "NUMBER"
+    ID = "ID"
+    KEYWORD = "KEYWORD"
+    SYMBOL = "SYMBOL"
+    COMMENT = "COMMENT"
+    WHITESPACE = "WHITESPACE"
 
 
 class LexicalError(enum.Enum):
@@ -55,7 +55,7 @@ class Scanner:
             if token_type:
                 token = self.code[self.start_cursor:self.end_cursor]
                 if token_type not in [TokenType.WHITESPACE, TokenType.COMMENT]:
-                    self.tokens[self.lineno].append((token_type, token))
+                    self.tokens[self.lineno].append((token_type.value, token))
                 self.start_cursor = self.end_cursor
                 self.state = 0
                 return token_type, token
