@@ -2,7 +2,7 @@ class FileHandler:
     def __init__(self) -> None:
         self.buffer_size = 1024
 
-    def read_all(self, address: str = "output", format: str = ".txt") -> str:
+    def read_all(self, address: str = "input", format: str = ".txt") -> str:
         try:
             with open(address + format, 'r') as file:
                 return file.read()
