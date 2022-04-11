@@ -12,7 +12,7 @@ def read_all(filename: str = "input", format: str = ".txt") -> str:
     except IOError:
         return ""
 
-def write(filename: str = "output", format: str = ".txt", string: str = "") -> bool:
+def write_all(filename: str = "output", format: str = ".txt", string: str = "") -> bool:
     try:
         with open(filename + format, "w") as file:
             file.write(string)

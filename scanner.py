@@ -1,7 +1,7 @@
 import enum
 from collections import defaultdict
 
-from file_handler import FileHandler
+from file_handler import *
 
 
 class TokenType(enum.Enum):
@@ -29,11 +29,15 @@ class Scanner:
     input_filename = 'input.txt'
 
     def __init__(self):
-        self.file_handler = FileHandler()
-        self.code = self.file_handler.read_all()
-        if self.code[-1] != '\n':
-            self.code += '\n'
-
+        self.buffer = 4096
+        self.gen = read_chunks(buffer_size=self.buffer)
+        self.first_half = next(self.gen)
+        try:
+            self.second_half = next(self.gen)
+        except StopIteration:
+            self.second_half = ""
+        
+        
         self.lineno = 1
         self.start_cursor = 0
         self.end_cursor = 0
@@ -45,10 +49,24 @@ class Scanner:
         self.symbols = list(KEYWORDS)
 
     def get_next_token(self):
-        while self.end_cursor < len(self.code):
-            char = self.code[self.end_cursor]
-            self.end_cursor += 1  # now char is self.code[self.end_cursor - 1]
-
+        while True:
+            if self.end_cursor == 2 * self.buffer:
+                self.first_half = self.second_half
+                self.second_half = next(self.gen)
+                self.start_cursor -= self.buffer
+                self.end_cursor -= self.buffer
+                
+            self.code = self.first_half + self.second_half
+            
+            # print(len(self.code), self.code[:self.buffer],"  ",self.code[self.buffer:])
+            if len(self.code) < 2 * self.buffer and self.end_cursor > len(self.code):
+                print("finish lane", len(self.code))
+                break
+            elif len(self.code) < 2 * self.buffer and self.end_cursor == len(self.code):
+                char = '\n'
+            else:
+                char = self.code[self.end_cursor]
+            self.end_cursor += 1
             error = self.set_next_state(char)
             if error:
                 self.log_error(error)
@@ -59,11 +77,12 @@ class Scanner:
             if token_type:
                 token = self.code[self.start_cursor:self.end_cursor]
                 if token_type not in [TokenType.WHITESPACE, TokenType.COMMENT]:
-                    self.tokens[self.lineno].append(f"({token_type.value}, {token})")
+                    self.tokens[self.lineno].append(
+                        f"({token_type.value}, {token})")
                 self.start_cursor = self.end_cursor
                 self.state = 0
                 return token_type, token
-
+            
         if self.state == 8:
             self.log_error(LexicalError.UNCLOSED_COMMENT)
         """
@@ -71,12 +90,9 @@ class Scanner:
         print(self.general_to_string(self.tokens))
         print(self.symbols_to_string(self.symbols))
         """
-        self.file_handler.write(address="tokens",
-                                string=self.general_to_string(self.tokens))
-        self.file_handler.write(address="lexical_errors",
-                                string=self.general_to_string(self.errors))
-        self.file_handler.write(address="symbol_table",
-                                string=self.symbols_to_string(self.symbols))
+        write_all(filename="tokens", string=self.general_to_string(self.tokens))
+        write_all(filename="lexical_errors", string=self.general_to_string(self.errors))
+        write_all(filename="symbol_table", string=self.symbols_to_string(self.symbols))
 
     def set_next_state(self, char):
         # Initial state
@@ -225,20 +241,22 @@ class Scanner:
     def log_error(self, error):
         invalid_string = self.code[self.start_cursor:self.end_cursor]
         if error == LexicalError.INVALID_INPUT:
-            self.errors[self.lineno].append(f"({invalid_string}, {error.value})")
+            self.errors[self.lineno].append(
+                f"({invalid_string}, {error.value})")
         elif error == LexicalError.UNCLOSED_COMMENT:
             self.errors[self.lineno].append(
                 f"({invalid_string[:10]}..., {error.value})")
         elif error == LexicalError.UNMATCHED_COMMENT:
-            self.errors[self.lineno].append(f"({invalid_string}, {error.value})")
+            self.errors[self.lineno].append(
+                f"({invalid_string}, {error.value})")
         elif error == LexicalError.INVALID_NUMBER:
-            self.errors[self.lineno].append(f"({invalid_string}, {error.value})")
+            self.errors[self.lineno].append(
+                f"({invalid_string}, {error.value})")
 
     @staticmethod
     def general_to_string(dict_data) -> str:
         result = ""
-        print(dict_data)
-        if len(dict_data) == 0: 
+        if len(dict_data) == 0:
             # need another function
             return "There is no lexical error."
         for key, value in dict_data.items():
