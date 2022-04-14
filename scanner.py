@@ -88,7 +88,7 @@ class Scanner:
             self.log_error(LexicalError.UNCLOSED_COMMENT)
 
         write_all(filename="tokens", string=self.tokens_to_string(self.tokens))
-        write_all(filename="lexical_errors", string=self.tokens_to_string(self.errors))
+        write_all(filename="lexical_errors", string=self.errors_to_string(self.errors))
         write_all(filename="symbol_table", string=self.symbols_to_string(self.symbols))
 
     def set_next_state(self, char):
