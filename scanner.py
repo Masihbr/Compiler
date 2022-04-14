@@ -269,7 +269,7 @@ class Scanner:
     def errors_to_string(cls, lexime_errors: defaultdict(list)) -> str:
         if len(lexime_errors) == 0:
             return "There is no lexical error."
-        return cls.defaultdict_to_string
+        return cls.defaultdict_to_string(lexime_errors)
     
     @staticmethod
     def symbols_to_string(list_data: list) -> str:
