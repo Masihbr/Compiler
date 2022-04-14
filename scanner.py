@@ -26,17 +26,15 @@ KEYWORDS = ("break", "continue", "def", "else", "if", "return", "while")
 
 
 class Scanner:
-    input_filename = 'input.txt'
-
     def __init__(self):
         self.buffer = 4096
-        self.gen = read_chunks(buffer_size=self.buffer)
-        self.first_half = next(self.gen)
+        self.bufferd_reader = read_chunks(buffer_size=self.buffer)
+        self.first_half = next(self.bufferd_reader)
+        
         try:
-            self.second_half = next(self.gen)
+            self.second_half = next(self.bufferd_reader)
         except StopIteration:
             self.second_half = ""
-        
         
         self.lineno = 1
         self.start_cursor = 0
@@ -48,25 +46,28 @@ class Scanner:
         self.errors = defaultdict(list)
         self.symbols = list(KEYWORDS)
 
+    def load_buffer(self):
+        self.first_half = self.second_half
+        self.second_half = next(self.bufferd_reader)
+        self.start_cursor -= self.buffer
+        self.end_cursor -= self.buffer
+        
     def get_next_token(self):
         while True:
             if self.end_cursor == 2 * self.buffer:
-                self.first_half = self.second_half
-                self.second_half = next(self.gen)
-                self.start_cursor -= self.buffer
-                self.end_cursor -= self.buffer
+                self.load_buffer()
                 
             self.code = self.first_half + self.second_half
             
-            # print(len(self.code), self.code[:self.buffer],"  ",self.code[self.buffer:])
             if len(self.code) < 2 * self.buffer and self.end_cursor > len(self.code):
-                print("finish lane", len(self.code))
                 break
             elif len(self.code) < 2 * self.buffer and self.end_cursor == len(self.code):
                 char = '\n'
             else:
                 char = self.code[self.end_cursor]
+            
             self.end_cursor += 1
+            
             error = self.set_next_state(char)
             if error:
                 self.log_error(error)
@@ -75,7 +76,7 @@ class Scanner:
 
             token_type = self.check_final_states()
             if token_type:
-                token = self.code[self.start_cursor:self.end_cursor]
+                token = self.get_lexime()
                 if token_type not in [TokenType.WHITESPACE, TokenType.COMMENT]:
                     self.tokens[self.lineno].append(
                         f"({token_type.value}, {token})")
@@ -85,13 +86,9 @@ class Scanner:
             
         if self.state == 8:
             self.log_error(LexicalError.UNCLOSED_COMMENT)
-        """
-        print(self.general_to_string(self.errors))
-        print(self.general_to_string(self.tokens))
-        print(self.symbols_to_string(self.symbols))
-        """
-        write_all(filename="tokens", string=self.general_to_string(self.tokens))
-        write_all(filename="lexical_errors", string=self.general_to_string(self.errors))
+
+        write_all(filename="tokens", string=self.tokens_to_string(self.tokens))
+        write_all(filename="lexical_errors", string=self.tokens_to_string(self.errors))
         write_all(filename="symbol_table", string=self.symbols_to_string(self.symbols))
 
     def set_next_state(self, char):
@@ -199,6 +196,9 @@ class Scanner:
             else:
                 return LexicalError.INVALID_INPUT
 
+    def get_lexime(self):
+        return self.code[self.start_cursor:self.end_cursor]
+    
     def install_id(self, token: str) -> bool:
         if token in self.symbols:
             return False
@@ -213,7 +213,7 @@ class Scanner:
         # ID, Keyword final state
         elif self.state == 6:
             self.end_cursor -= 1
-            token = self.code[self.start_cursor:self.end_cursor]
+            token = self.get_lexime()
             if token in KEYWORDS:
                 return TokenType.KEYWORD
             else:
@@ -253,19 +253,26 @@ class Scanner:
             self.errors[self.lineno].append(
                 f"({invalid_string}, {error.value})")
 
-    @staticmethod
-    def general_to_string(dict_data) -> str:
+    @classmethod
+    def defaultdict_to_string(cls, defaultdict: defaultdict(list)) -> str:
         result = ""
-        if len(dict_data) == 0:
-            # need another function
-            return "There is no lexical error."
-        for key, value in dict_data.items():
+        for key, value in defaultdict.items():
             string = ' '.join(map(str, value))
             result += f"{key}.\t{string}\n"
         return result
 
+    @classmethod
+    def tokens_to_string(cls, tokens: defaultdict(list)) -> str:
+        return cls.defaultdict_to_string(tokens)
+
+    @classmethod
+    def errors_to_string(cls, lexime_errors: defaultdict(list)) -> str:
+        if len(lexime_errors) == 0:
+            return "There is no lexical error."
+        return cls.defaultdict_to_string
+    
     @staticmethod
-    def symbols_to_string(list_data) -> str:
+    def symbols_to_string(list_data: list) -> str:
         result = ""
         count = 1
         for symbol in list_data:
