@@ -28,11 +28,11 @@ KEYWORDS = ("break", "continue", "def", "else", "if", "return", "while")
 class Scanner:
     def __init__(self):
         self.buffer = 4096
-        self.bufferd_reader = read_chunks(buffer_size=self.buffer)
-        self.first_half = next(self.bufferd_reader)
+        self.buffered_reader = read_chunks(buffer_size=self.buffer)
+        self.first_half = next(self.buffered_reader)
         
         try:
-            self.second_half = next(self.bufferd_reader)
+            self.second_half = next(self.buffered_reader)
         except StopIteration:
             self.second_half = ""
         
@@ -48,7 +48,7 @@ class Scanner:
 
     def load_buffer(self):
         self.first_half = self.second_half
-        self.second_half = next(self.bufferd_reader)
+        self.second_half = next(self.buffered_reader)
         self.start_cursor -= self.buffer
         self.end_cursor -= self.buffer
         
@@ -61,7 +61,7 @@ class Scanner:
             
             if len(self.code) < 2 * self.buffer and self.end_cursor > len(self.code):
                 break
-            elif len(self.code) < 2 * self.buffer and self.end_cursor == len(self.code):
+            elif self.end_cursor == len(self.code) < 2 * self.buffer:
                 char = '\n'
             else:
                 char = self.code[self.end_cursor]
@@ -76,7 +76,7 @@ class Scanner:
 
             token_type = self.check_final_states()
             if token_type:
-                token = self.get_lexime()
+                token = self.get_lexeme()
                 if token_type not in [TokenType.WHITESPACE, TokenType.COMMENT]:
                     self.tokens[self.lineno].append(
                         f"({token_type.value}, {token})")
@@ -196,7 +196,7 @@ class Scanner:
             else:
                 return LexicalError.INVALID_INPUT
 
-    def get_lexime(self):
+    def get_lexeme(self):
         return self.code[self.start_cursor:self.end_cursor]
     
     def install_id(self, token: str) -> bool:
@@ -213,7 +213,7 @@ class Scanner:
         # ID, Keyword final state
         elif self.state == 6:
             self.end_cursor -= 1
-            token = self.get_lexime()
+            token = self.get_lexeme()
             if token in KEYWORDS:
                 return TokenType.KEYWORD
             else:
@@ -239,7 +239,7 @@ class Scanner:
             return TokenType.SYMBOL
 
     def log_error(self, error):
-        invalid_string = self.code[self.start_cursor:self.end_cursor]
+        invalid_string = self.get_lexeme()
         if error == LexicalError.INVALID_INPUT:
             self.errors[self.lineno].append(
                 f"({invalid_string}, {error.value})")
