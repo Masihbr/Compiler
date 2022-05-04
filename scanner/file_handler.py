@@ -5,12 +5,14 @@ def read_chunks(filename: str = "input", format: str = ".txt", buffer_size: int 
             yield chunk
             chunk = file.read(buffer_size)
 
+
 def read_all(filename: str = "input", format: str = ".txt") -> str:
     try:
         with open(filename + format, 'r') as file:
             return file.read()
     except IOError:
         return ""
+
 
 def write_all(filename: str = "output", format: str = ".txt", string: str = "") -> bool:
     try:
