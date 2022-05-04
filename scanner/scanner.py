@@ -1,16 +1,17 @@
 import enum
 from collections import defaultdict
 
-from file_handler import *
+from scanner.file_handler import *
 
 
 class TokenType(enum.Enum):
-    NUMBER = "NUMBER"
+    NUMBER = "NUM"
     ID = "ID"
     KEYWORD = "KEYWORD"
     SYMBOL = "SYMBOL"
     COMMENT = "COMMENT"
     WHITESPACE = "WHITESPACE"
+    EOF = "$"
 
 
 class LexicalError(enum.Enum):
@@ -30,12 +31,12 @@ class Scanner:
         self.buffer = 4096
         self.buffered_reader = read_chunks(buffer_size=self.buffer)
         self.first_half = next(self.buffered_reader)
-        
+
         try:
             self.second_half = next(self.buffered_reader)
         except StopIteration:
             self.second_half = ""
-        
+
         self.lineno = 1
         self.start_cursor = 0
         self.end_cursor = 0
@@ -51,23 +52,23 @@ class Scanner:
         self.second_half = next(self.buffered_reader)
         self.start_cursor -= self.buffer
         self.end_cursor -= self.buffer
-        
+
     def get_next_token(self):
         while True:
             if self.end_cursor == 2 * self.buffer:
                 self.load_buffer()
-                
+
             self.code = self.first_half + self.second_half
-            
+
             if len(self.code) < 2 * self.buffer and self.end_cursor > len(self.code):
                 break
             elif self.end_cursor == len(self.code) < 2 * self.buffer:
                 char = '\n'
             else:
                 char = self.code[self.end_cursor]
-            
+
             self.end_cursor += 1
-            
+
             error = self.set_next_state(char)
             if error:
                 self.log_error(error)
@@ -83,13 +84,15 @@ class Scanner:
                 self.start_cursor = self.end_cursor
                 self.state = 0
                 return token_type, token
-            
+
         if self.state == 8:
             self.log_error(LexicalError.UNCLOSED_COMMENT)
 
         write_all(filename="tokens", string=self.tokens_to_string(self.tokens))
         write_all(filename="lexical_errors", string=self.errors_to_string(self.errors))
         write_all(filename="symbol_table", string=self.symbols_to_string(self.symbols))
+
+        return TokenType.EOF, '$'
 
     def set_next_state(self, char):
         # Initial state
@@ -198,7 +201,7 @@ class Scanner:
 
     def get_lexeme(self):
         return self.code[self.start_cursor:self.end_cursor]
-    
+
     def install_id(self, token: str) -> bool:
         if token in self.symbols:
             return False
@@ -270,7 +273,7 @@ class Scanner:
         if len(lexime_errors) == 0:
             return "There is no lexical error."
         return cls.defaultdict_to_string(lexime_errors)
-    
+
     @staticmethod
     def symbols_to_string(list_data: list) -> str:
         result = ""
