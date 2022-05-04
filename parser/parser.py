@@ -1,4 +1,4 @@
-from collections import deque
+from collections import deque, defaultdict
 
 from parser.parse_table import PARSE_TABLE, SYNCHRONOUS
 from scanner.scanner import Scanner, TokenType
@@ -15,6 +15,12 @@ class Parser:
         self._current_token_terminal = None
         self._current_token = None
 
+        self.errors = defaultdict(list)
+
+    @property
+    def lineno(self):
+        return self._scanner.lineno
+
     def parse(self):
         self.advance_input()
         while self.stack:
@@ -23,7 +29,8 @@ class Parser:
                 break
             if self.stack[-1] not in self._parse_table.keys():
                 if self.stack[-1] != self._current_token_terminal:
-                    # TODO: ERR
+                    self.errors[self.lineno].append(
+                        f'#{self.lineno} : syntax error, missing {self.stack[-1]}')
                     self.stack.pop()
                     continue
 
@@ -37,12 +44,14 @@ class Parser:
 
                 self.stack.pop()
                 if grammar == SYNCHRONOUS:
-                    # TODO: ERR
+                    self.errors[self.lineno].append(
+                        f'#{self.lineno} : syntax error, missing {self.stack[-1]} on line {self.lineno}')
                     pass
                 if grammar is not None:
                     self.stack.extend(reversed(grammar.split()))
             except KeyError:
-                # TODO: ERR
+                self.errors[self.lineno].append(
+                    f'#{self.lineno} : syntax error, illegal {self._current_token_terminal}')
                 self.advance_input()
 
     def advance_input(self):
