@@ -88,9 +88,9 @@ class Scanner:
         if self.state == 8:
             self.log_error(LexicalError.UNCLOSED_COMMENT)
 
-        write_all(filename="tokens", string=self.tokens_to_string(self.tokens))
-        write_all(filename="lexical_errors", string=self.errors_to_string(self.errors))
-        write_all(filename="symbol_table", string=self.symbols_to_string(self.symbols))
+        # write_all(filename="tokens", string=self.tokens_to_string(self.tokens))
+        # write_all(filename="lexical_errors", string=self.errors_to_string(self.errors))
+        # write_all(filename="symbol_table", string=self.symbols_to_string(self.symbols))
 
         return TokenType.EOF, '$'
 
