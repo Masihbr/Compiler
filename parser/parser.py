@@ -34,12 +34,12 @@ class Parser:
     def parse(self):
         self.advance_input()
         while self.stack:
-            print(self.stack, self._current_token_terminal, self.lineno)
+            # print(self.stack, self._current_token_terminal, self.lineno)
             if self._current_token_terminal == TokenType.EOF:
                 break
             if self.stack[-1] not in self._parse_table.keys():
                 if self.stack[-1] != self._current_token_terminal:
-                    print('\ntoken match', self.stack, self.lineno, '\n')
+                    # print('\ntoken match', self.stack, self.lineno, '\n')
                     self.errors[self.lineno].append(
                         f'#{self.lineno} : syntax error, missing {self.stack[-1]}')
                     self.stack.pop()
@@ -60,7 +60,6 @@ class Parser:
                 self.stack.pop()
                 self.tree.pop()
                 if grammar == SYNCHRONOUS:
-                    print('\nsynch', self.stack, '\n')
                     self.remove_node(parent)
                     self.errors[self.lineno].append(
                         f'#{self.lineno} : syntax error, missing {stack_top} on line {self.lineno}')
@@ -73,7 +72,6 @@ class Parser:
                 else:
                     Node('epsilon', parent=parent)
             except KeyError:
-                print('\nempty', self.stack, '\n')
                 self.errors[self.lineno].append(
                     f'#{self.lineno} : syntax error, illegal {self._current_token_terminal}')
                 self.advance_input()
