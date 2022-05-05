@@ -35,7 +35,7 @@ class Parser:
         self.advance_input()
         while self.stack:
             # print(self.stack, self._current_token_terminal, self.lineno)
-            if self._current_token_terminal == TokenType.EOF:
+            if self._current_token_terminal == TokenType.EOF.value:
                 break
             if self.stack[-1] not in self._parse_table.keys():
                 if self.stack[-1] != self._current_token_terminal:
