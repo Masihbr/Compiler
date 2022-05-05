@@ -34,14 +34,7 @@ class Parser:
     def parse(self):
         self.advance_input()
         while self.stack:
-            print(self.stack, self._current_token_terminal, self.lineno)
-            if self._current_token_terminal == TokenType.EOF.value:
-                self.errors[self.lineno].append(
-                        f'#{self.lineno} : syntax error, Unexpected EOF')
-                while len(self.tree) > 0 :
-                    self.remove_node(self.tree[-1])
-                    self.tree.pop()
-                break
+            # print(self.stack, self._current_token_terminal, self.lineno)
             if self.stack[-1] not in self._parse_table.keys():
                 if self.stack[-1] != self._current_token_terminal:
                     # print('\ntoken match', self.stack, self.lineno, '\n')
@@ -57,7 +50,7 @@ class Parser:
                 self.tree.pop()
                 self.advance_input()
                 continue
-
+            
             try:
                 stack_top = self.stack[-1]
                 parent = self.tree[-1]
@@ -77,6 +70,14 @@ class Parser:
                 else:
                     Node('epsilon', parent=parent)
             except KeyError:
+                if self._current_token_terminal == '$' and self.stack[-1] != '$':
+                    self.errors[self.lineno].append(
+                            f'#{self.lineno} : syntax error, Unexpected EOF')
+                    while len(self.tree) > 0 :
+                        self.remove_node(self.tree[-1])
+                        self.tree.pop()
+                    break
+                
                 self.errors[self.lineno].append(
                     f'#{self.lineno} : syntax error, illegal {self._current_token_terminal}')
                 self.advance_input()
