@@ -183,6 +183,7 @@ PARSE_TABLE = {
     },
     'Power': {
         ';': 'Primary',
+        '[': 'Primary',
         ']': 'Primary',
         '(': 'Primary',
         ')': 'Primary',
@@ -197,6 +198,7 @@ PARSE_TABLE = {
     },
     'Primary': {
         ';': EPSILON,
+        '[': '[ Expression ] Primary',
         ']': EPSILON,
         '(': '( Arguments ) Primary',
         ')': EPSILON,
