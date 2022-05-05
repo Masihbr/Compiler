@@ -63,7 +63,7 @@ class Scanner:
             if len(self.code) < 2 * self.buffer and self.end_cursor > len(self.code):
                 break
             elif self.end_cursor == len(self.code) < 2 * self.buffer:
-                char = '\n'
+                char = ' '
             else:
                 char = self.code[self.end_cursor]
 
