@@ -14,8 +14,8 @@ class Parser:
         self._parse_table = PARSE_TABLE
         self.stack = deque(['$', 'Program'])
         self.root = Node('Program')
-        end = Node('$', parent = self.root)
-        self.tree = deque([end, self.root])
+        self.end = Node('$', parent = self.root)
+        self.tree = deque([self.end, self.root])
         self._current_token_terminal = None
         self._current_token = None
 
@@ -34,8 +34,13 @@ class Parser:
     def parse(self):
         self.advance_input()
         while self.stack:
-            # print(self.stack, self._current_token_terminal, self.lineno)
+            print(self.stack, self._current_token_terminal, self.lineno)
             if self._current_token_terminal == TokenType.EOF.value:
+                self.errors[self.lineno].append(
+                        f'#{self.lineno} : syntax error, Unexpected EOF')
+                while len(self.tree) > 0 :
+                    self.remove_node(self.tree[-1])
+                    self.tree.pop()
                 break
             if self.stack[-1] not in self._parse_table.keys():
                 if self.stack[-1] != self._current_token_terminal:
