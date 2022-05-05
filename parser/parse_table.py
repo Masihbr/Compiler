@@ -1,5 +1,5 @@
 EPSILON = None
-SYNCHRONOUS = 'sync'
+SYNCHRONOUS = 'synch'
 
 PARSE_TABLE = {
     'Program': {
