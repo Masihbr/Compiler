@@ -1,6 +1,4 @@
 from collections import deque, defaultdict
-from tokenize import Token
-
 from parser.parse_table import PARSE_TABLE, SYNCHRONOUS
 from utils.file_handler import write_all
 from scanner.scanner import Scanner, TokenType
@@ -64,10 +62,10 @@ class Parser:
                 elif not grammar:
                     Node('epsilon', parent=tree_top)
                 else: # Non-Terminal match
-                    grammar_split = grammar.split()[::-1]
+                    grammar_reversed = grammar[::-1]
                     children = [Node(child, parent=tree_top)
-                                for child in grammar_split]
-                    self._stack.extend(grammar_split)
+                                for child in grammar_reversed]
+                    self._stack.extend(grammar_reversed)
                     self._tree.extend(children)
             else:
                 if stack_top != self.terminal:  # mismatch (3)
