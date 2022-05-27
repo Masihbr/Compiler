@@ -2,7 +2,7 @@ from collections import deque, defaultdict
 from tokenize import Token
 
 from parser.parse_table import PARSE_TABLE, SYNCHRONOUS
-from scanner.file_handler import write_all
+from utils.file_handler import write_all
 from scanner.scanner import Scanner, TokenType
 from anytree import Node, RenderTree
 

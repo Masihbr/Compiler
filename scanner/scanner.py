@@ -1,7 +1,7 @@
 import enum
 from collections import defaultdict
 
-from scanner.file_handler import *
+from utils.file_handler import *
 
 
 class TokenType(enum.Enum):
