@@ -6,6 +6,7 @@ __pycache__/
 # tests files
 *.txt
 !requirements.txt
+!grammar.txt
 
 # quera file
 *.zip

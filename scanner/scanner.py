@@ -21,8 +21,8 @@ class LexicalError(enum.Enum):
     INVALID_NUMBER = 'Invalid number'
 
 
-WHITESPACES = [' ', '\n', '\r', '\t', '\v', '\f']
-SINGLE_SYMBOLS = [';', ':', ',', '[', ']', '(', ')', '+', '-', '<']
+WHITESPACES = (' ', '\n', '\r', '\t', '\v', '\f')
+SINGLE_SYMBOLS = (';', ':', ',', '[', ']', '(', ')', '+', '-', '<')
 KEYWORDS = ("break", "continue", "def", "else", "if", "return", "while")
 
 
@@ -88,9 +88,9 @@ class Scanner:
         if self.state == 8:
             self.log_error(LexicalError.UNCLOSED_COMMENT)
 
-        # write_all(filename="tokens", string=self.tokens_to_string(self.tokens))
-        # write_all(filename="lexical_errors", string=self.errors_to_string(self.errors))
-        # write_all(filename="symbol_table", string=self.symbols_to_string(self.symbols))
+        write_all(filename="tokens", string=self.tokens_to_string(self.tokens))
+        write_all(filename="lexical_errors", string=self.errors_to_string(self.errors))
+        write_all(filename="symbol_table", string=self.symbols_to_string(self.symbols))
 
         return TokenType.EOF, '$'
 
@@ -256,8 +256,8 @@ class Scanner:
             self.errors[self.lineno].append(
                 f"({invalid_string}, {error.value})")
 
-    @classmethod
-    def defaultdict_to_string(cls, defaultdict: defaultdict(list)) -> str:
+    @staticmethod
+    def defaultdict_to_string(defaultdict: defaultdict(list)) -> str:
         result = ""
         for key, value in defaultdict.items():
             string = ' '.join(map(str, value))
