@@ -1,5 +1,7 @@
 from collections import deque, defaultdict
+from tokenize import Token
 from parser.parse_table import PARSE_TABLE, SYNCHRONOUS
+from parser.symbol_table import SymbolTable
 from utils.file_handler import write_all
 from scanner.scanner import Scanner, TokenType
 from anytree import Node, RenderTree
@@ -7,6 +9,7 @@ from anytree import Node, RenderTree
 
 class Parser:
     def __init__(self):
+        self._symbol_table = SymbolTable()
         self._scanner = Scanner()
         self._parse_table = PARSE_TABLE
         self._stack = deque(['$', 'Program'])
@@ -75,7 +78,8 @@ class Parser:
                         f'({self._current_token[0].value}, {self._current_token[1]})'
                     self.pop_stacks()
                     self.advance_input()
-                    
+        
+        write_all(filename='symbol_table', string=str(self._symbol_table))
         write_all(filename='parse_tree', string=str(RenderTree(self._root, childiter=reversed).by_attr()))
         write_all(filename='syntax_errors', string=self.errors_to_string())
 
@@ -102,6 +106,8 @@ class Parser:
 
     def advance_input(self):
         self._current_token = self._scanner.get_next_token()
+        if self._current_token[0] == TokenType.ID:
+            self._symbol_table.add_symbol(lexeme=self._current_token[1], line=self.lineno)
         if self._current_token[0] in [TokenType.WHITESPACE, TokenType.COMMENT]:
             self.advance_input()
 

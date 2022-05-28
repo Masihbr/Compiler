@@ -269,10 +269,10 @@ class Scanner:
         return cls.defaultdict_to_string(tokens)
 
     @classmethod
-    def errors_to_string(cls, lexime_errors: defaultdict(list)) -> str:
-        if len(lexime_errors) == 0:
+    def errors_to_string(cls, lexeme_errors: defaultdict(list)) -> str:
+        if len(lexeme_errors) == 0:
             return "There is no lexical error."
-        return cls.defaultdict_to_string(lexime_errors)
+        return cls.defaultdict_to_string(lexeme_errors)
 
     @staticmethod
     def symbols_to_string(list_data: list) -> str:
