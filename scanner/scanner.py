@@ -23,7 +23,7 @@ class LexicalError(enum.Enum):
 
 WHITESPACES = (' ', '\n', '\r', '\t', '\v', '\f')
 SINGLE_SYMBOLS = (';', ':', ',', '[', ']', '(', ')', '+', '-', '<')
-KEYWORDS = ('break', 'continue', 'def', 'else', 'if', 'return', 'while')
+KEYWORDS = ('break', 'continue', 'def', 'else', 'if', 'return', 'while', 'global')
 
 
 class Scanner:

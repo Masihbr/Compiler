@@ -53,12 +53,12 @@ PARSE_TABLE = {
     },
     'Assignment_Call': {
         ';': SYNCHRONOUS,
-        'ID': ('ID', 'B'),
+        'ID': ('#pid', 'ID', 'B'), # Assignment_Call -> #pid ID B
     },
     'B': {
         ';': SYNCHRONOUS,
-        '=': ('=', 'C'),
-        '[': ('[', 'Expression', ']', '=', 'C'),
+        '=': ('=', 'C', '#assign'), # = C #assign
+        '[': ('[', 'Expression', ']', '=', 'C', '#assign'), # B -> [ Expression ] = C #assign
         '(': ('(', 'Arguments', ')'),
     },
     'C': {
@@ -221,7 +221,7 @@ PARSE_TABLE = {
     },
     'Atom': {
         ';': SYNCHRONOUS,
-        'ID': ('ID',),
+        'ID': ('#pid', 'ID'), # Atom -> #pid ID
         '[': SYNCHRONOUS,
         ']': SYNCHRONOUS,
         '(': SYNCHRONOUS,
@@ -234,6 +234,6 @@ PARSE_TABLE = {
         '-': SYNCHRONOUS,
         '*': SYNCHRONOUS,
         '**': SYNCHRONOUS,
-        'NUM': ('NUM',),
+        'NUM': ('#pnum','NUM'), # Atom -> #pnum NUM
     },
 }

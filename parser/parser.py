@@ -1,5 +1,6 @@
 from collections import deque, defaultdict
 from tokenize import Token
+from codegen.codegen import CodeGenerator
 from parser.parse_table import PARSE_TABLE, SYNCHRONOUS
 from parser.symbol_table import SymbolTable
 from utils.file_handler import write_all
@@ -10,6 +11,7 @@ from anytree import Node, RenderTree
 class Parser:
     def __init__(self):
         self._symbol_table = SymbolTable()
+        self._code = CodeGenerator(self._symbol_table)
         self._scanner = Scanner()
         self._parse_table = PARSE_TABLE
         self._stack = deque(['$', 'Program'])
@@ -29,6 +31,10 @@ class Parser:
         else:
             return self._current_token[1]
 
+    @property
+    def lexeme(self):
+        return self._current_token[1]
+
     def pop_stacks(self):
         self._stack.pop()
         self._tree.pop()
@@ -44,12 +50,18 @@ class Parser:
             self.remove_node(self._tree[-1])
             self._tree.pop()
 
+    def codegen(self):
+        action_symbol = self._stack.pop()
+        self._code.generate(action_symbol=action_symbol, input=self.lexeme)
+        
     def parse(self):
         self.advance_input()
         while self._stack:
             stack_top = self._stack[-1]
             tree_top = self._tree[-1]
-            if stack_top in self._parse_table.keys():
+            if stack_top.startswith('#'):
+                self.codegen()
+            elif stack_top in self._parse_table.keys():
                 if self.terminal not in self._parse_table[stack_top].keys(): # empty (1)
                     if self.terminal == TokenType.EOF.value and self._stack[-1] != TokenType.EOF.value:
                         self.handle_unexpected_eof()
@@ -67,7 +79,7 @@ class Parser:
                 else: # Non-Terminal match
                     grammar_reversed = grammar[::-1]
                     children = [Node(child, parent=tree_top)
-                                for child in grammar_reversed]
+                                for child in grammar_reversed if not child.startswith('#')]
                     self._stack.extend(grammar_reversed)
                     self._tree.extend(children)
             else:
@@ -82,6 +94,7 @@ class Parser:
         write_all(filename='symbol_table', string=str(self._symbol_table))
         write_all(filename='parse_tree', string=str(RenderTree(self._root, childiter=reversed).by_attr()))
         write_all(filename='syntax_errors', string=self.errors_to_string())
+        write_all(filename='output.txt', string=self._code.get_program_block())
 
     def handle_unexpected_eof(self):
         self._errors[self.lineno].append(

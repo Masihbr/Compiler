@@ -11,10 +11,10 @@ Simple_stmt -> continue
 Compound_stmt -> Function_def
 Compound_stmt -> If_stmt
 Compound_stmt -> Iteration_stmt
-Assignment_Call -> ID B
-B -> = C
-B -> [ Expression ] = C
-B -> ( Arguments )
+Assignment_Call -> #pid ID B
+B -> = C #assign
+B -> [ Expression ] = C #assign
+B -> ( Arguments ) 
 C -> Expression
 C -> [ Expression List_Rest ]
 List_Rest -> , Expression List_Rest
@@ -52,9 +52,12 @@ Arguments -> Expression Arguments_Prime
 Arguments -> ''
 Arguments_Prime -> , Expression Arguments_Prime
 Arguments_Prime -> ''
-Atom -> ID
-Atom -> NUM
+Atom -> #pid ID
+Atom -> #pnum NUM
 #save -> ''
 #save_jpf -> ''
 #jpf -> ''
 #jp -> ''
+#pid -> ''
+#pnum -> ''
+#assign -> ''
