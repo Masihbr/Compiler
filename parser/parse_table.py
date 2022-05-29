@@ -59,7 +59,7 @@ PARSE_TABLE = {
         ';': SYNCHRONOUS,
         '=': ('=', 'C', '#assign'), # = C #assign
         '[': ('[', 'Expression', ']', '=', 'C', '#assign'), # B -> [ Expression ] = C #assign
-        '(': ('(', 'Arguments', ')'),
+        '(': ('(', 'Arguments', ')', '#func_call_finish'), # B -> ( Arguments ) #func_call_finish
     },
     'C': {
         ';': SYNCHRONOUS,
@@ -86,23 +86,23 @@ PARSE_TABLE = {
     },
     'Function_def': {
         ';': SYNCHRONOUS,
-        'def': ('def', 'ID', '(', 'Params', ')', ':', 'Statements'),
+        'def': ('def', '#pid', 'ID', '(', 'Params', ')', ':', 'Statements'), # Function_def -> def #pid ID ( Params ) : Statements
     },
     'Params': {
-        'ID': ('ID', 'Params_Prime'),
+        'ID': ('#pid', 'ID', 'Params_Prime'), # Params -> #pid ID Params_Prime
         ')': EPSILON,
     },
     'Params_Prime': {
         ')': EPSILON,
-        ',': (',', 'ID', 'Params_Prime'),
+        ',': (',', '#pid', 'ID', 'Params_Prime'), # Params -> #pid ID Params_Prime
     },
     'If_stmt': {
         ';': SYNCHRONOUS,
-        'if': ('if', 'Relational_Expression', ':', 'Statements', 'Else_block'),
+        'if': ('if', 'Relational_Expression', '#save', ':', 'Statements', 'Else_block'), # If_stmt -> if Relational_Expression #save : Statements Else_block
     },
     'Else_block': {
-        ';': EPSILON,
-        'else': ('else', ':', 'Statements'),
+        ';': (EPSILON, 'jpf'), # Else_block -> '' #jpf
+        'else': ('else', ':', '#jpf_save', 'Statements', '#jp'), # Else_block -> else : #jpf_save Statements #jp
     },
     'Iteration_stmt': {
         ';': SYNCHRONOUS,

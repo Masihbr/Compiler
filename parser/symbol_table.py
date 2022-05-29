@@ -26,6 +26,11 @@ class SymbolTable:
             if symbol.lexeme == lexeme:
                 return symbol.address 
 
+    def find_lexeme(self, addr:int=0):
+        for symbol in self._symbols:
+            if symbol.address == addr:
+                return symbol.lexeme
+    
     def get_address(self):
         addr = self._current_address
         self._current_address += 4

@@ -96,7 +96,7 @@ class Parser:
         write_all(filename='symbol_table', string=str(self._symbol_table))
         write_all(filename='parse_tree', string=str(RenderTree(self._root, childiter=reversed).by_attr()))
         write_all(filename='syntax_errors', string=self.errors_to_string())
-        write_all(filename='output.txt', string=self._code.get_program_block())
+        write_all(filename='output', string=self._code.get_program_block())
 
     def handle_non_terminal(self, tree_top, grammar):
         grammar_reversed = grammar[::-1]

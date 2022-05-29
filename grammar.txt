@@ -14,7 +14,7 @@ Compound_stmt -> Iteration_stmt
 Assignment_Call -> #pid ID B
 B -> = C #assign
 B -> [ Expression ] = C #assign
-B -> ( Arguments ) 
+B -> ( Arguments ) #func_call_finish
 C -> Expression
 C -> [ Expression List_Rest ]
 List_Rest -> , Expression List_Rest
@@ -23,10 +23,10 @@ Return_stmt -> return Return_Value
 Return_Value -> Expression
 Return_Value -> ''
 Global_stmt -> global ID
-Function_def -> def ID ( Params ) : Statements
-Params -> ID Params_Prime
+Function_def -> def #pid ID ( Params ) : Statements
+Params -> #pid ID Params_Prime
 Params -> ''
-Params_Prime -> , ID Params_Prime
+Params_Prime -> , #pid ID Params_Prime
 Params_Prime -> ''
 If_stmt -> if Relational_Expression #save : Statements Else_block
 Else_block -> else : #jpf_save Statements #jp
@@ -61,3 +61,4 @@ Atom -> #pnum NUM
 #pid -> ''
 #pnum -> ''
 #assign -> ''
+#func_call_finish -> ''
