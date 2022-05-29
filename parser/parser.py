@@ -50,51 +50,60 @@ class Parser:
             self.remove_node(self._tree[-1])
             self._tree.pop()
 
-    def codegen(self):
+    def codegen(self) -> None:
         action_symbol = self._stack.pop()
         self._code.generate(action_symbol=action_symbol, input=self.lexeme)
+    
+    def codeparse(self) -> bool:
+        stack_top = self._stack[-1]
+        tree_top = self._tree[-1]
+        if stack_top in self._parse_table.keys():
+            if self.terminal not in self._parse_table[stack_top].keys(): # empty (1)
+                if self.terminal == TokenType.EOF.value and stack_top != TokenType.EOF.value:
+                    self.handle_unexpected_eof()
+                    return False
+                self.handle_empty()
+                return True
+            
+            grammar = self._parse_table[stack_top][self.terminal]
+            self.pop_stacks()
+            
+            if grammar == SYNCHRONOUS:  # synch (2)
+                self.handle_synch(stack_top, tree_top)
+            elif not grammar:
+                Node('epsilon', parent=tree_top)
+            else: # Non-Terminal match
+                self.handle_non_terminal(tree_top, grammar)
+        else:
+            if stack_top != self.terminal:  # mismatch (3)
+                self.handle_mismatch()
+            else: # Terminal match
+                tree_top.name = '$' if self._current_token[1] == TokenType.EOF.value else \
+                    f'({self._current_token[0].value}, {self._current_token[1]})'
+                self.pop_stacks()
+                self.advance_input()
+        return True    
         
     def parse(self):
         self.advance_input()
-        while self._stack:
-            stack_top = self._stack[-1]
-            tree_top = self._tree[-1]
-            if stack_top.startswith('#'):
+        _continue = True
+        while self._stack and _continue:
+            if self._stack[-1].startswith('#'):
                 self.codegen()
-            elif stack_top in self._parse_table.keys():
-                if self.terminal not in self._parse_table[stack_top].keys(): # empty (1)
-                    if self.terminal == TokenType.EOF.value and self._stack[-1] != TokenType.EOF.value:
-                        self.handle_unexpected_eof()
-                        break
-                    self.handle_empty()
-                    continue
-                
-                grammar = self._parse_table[stack_top][self.terminal]
-                self.pop_stacks()
-                
-                if grammar == SYNCHRONOUS:  # synch (2)
-                    self.handle_synch(stack_top, tree_top)
-                elif not grammar:
-                    Node('epsilon', parent=tree_top)
-                else: # Non-Terminal match
-                    grammar_reversed = grammar[::-1]
-                    children = [Node(child, parent=tree_top)
-                                for child in grammar_reversed if not child.startswith('#')]
-                    self._stack.extend(grammar_reversed)
-                    self._tree.extend(children)
             else:
-                if stack_top != self.terminal:  # mismatch (3)
-                    self.handle_mismatch()
-                else: # Terminal match
-                    tree_top.name = '$' if self._current_token[1] == TokenType.EOF.value else \
-                        f'({self._current_token[0].value}, {self._current_token[1]})'
-                    self.pop_stacks()
-                    self.advance_input()
+                _continue = self.codeparse()                
         
         write_all(filename='symbol_table', string=str(self._symbol_table))
         write_all(filename='parse_tree', string=str(RenderTree(self._root, childiter=reversed).by_attr()))
         write_all(filename='syntax_errors', string=self.errors_to_string())
         write_all(filename='output.txt', string=self._code.get_program_block())
+
+    def handle_non_terminal(self, tree_top, grammar):
+        grammar_reversed = grammar[::-1]
+        children = [Node(child, parent=tree_top)
+                                for child in grammar_reversed if not child.startswith('#')]
+        self._stack.extend(grammar_reversed)
+        self._tree.extend(children)
 
     def handle_unexpected_eof(self):
         self._errors[self.lineno].append(
