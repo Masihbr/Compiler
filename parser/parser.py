@@ -68,6 +68,10 @@ class Parser:
             grammar = self._parse_table[stack_top][self.terminal]
             self.pop_stacks()
             
+            if grammar and len(grammar) > 1 and not grammar[0]: # (EPSILON, #action) situations
+                Node('epsilon', parent=tree_top)
+                grammar = tuple(filter(lambda x: x, grammar))
+            
             if grammar == SYNCHRONOUS:  # synch (2)
                 self.handle_synch(stack_top, tree_top)
             elif not grammar:
@@ -101,7 +105,7 @@ class Parser:
     def handle_non_terminal(self, tree_top, grammar):
         grammar_reversed = grammar[::-1]
         children = [Node(child, parent=tree_top)
-                                for child in grammar_reversed if not child.startswith('#')]
+                    for child in grammar_reversed if not child.startswith('#')]
         self._stack.extend(grammar_reversed)
         self._tree.extend(children)
 

@@ -32,11 +32,16 @@ class CodeGenerator:
             '#assign': self.assign,
             '#func_call_finish': self.func_call_finish,
             '#save': self.save,
+            '#jpf': self.jpf,
+            '#jpf_save': self.jpf_save,
+            '#jp': self.jp,
+            '#comp': self.comp,
+            '#comp_op': self.comp_op,
         }
 
     def generate(self, action_symbol: str, input: str):
         try:
-            if action_symbol in {'#pid', '#pnum'}:  # set of actions which need input for operation
+            if action_symbol in {'#pid', '#pnum', '#comp_op'}:  # set of actions which need input for operation
                 self._generator[action_symbol](input)
             else:
                 self._generator[action_symbol]()
@@ -64,18 +69,23 @@ class CodeGenerator:
             self._program_block.append(self.code('PRINT', out))
 
     def save(self):
-        self._program_block.append(self.code())
         self._semantic_stack.append(len(self._program_block))
+        self._program_block.append(self.code())
     
     def jpf_save(self):
-        pass
+        self.jpf()
         self.save()
     
     def jp(self):
-        pass
+        jump_address = self._semantic_stack.pop()
+        current_address = len(self._program_block) - 1
+        self._program_block[jump_address] = self.code('JP', current_address) 
         
     def jpf(self):
-        pass
+        jump_address = self._semantic_stack.pop()
+        jump_condition = self._semantic_stack.pop()
+        current_address = len(self._program_block) + 1
+        self._program_block[jump_address] = self.code('JPF', jump_condition, current_address)
     
     def comp_op(self, input:str):
         if input == '==':
@@ -85,12 +95,12 @@ class CodeGenerator:
         else:
             raise Exception(f'What the hell is {input}')
     
-    def comp(self, input:str):
+    def comp(self):
         rhs = self._semantic_stack.pop()
         action = self._semantic_stack.pop()
         lhs = self._semantic_stack.pop()
         temp = self._temp_generator.get_temp()
-        self._program_block.append(self.code(action, rhs, lhs, temp))
+        self._program_block.append(self.code(action, lhs, rhs, temp))
         self._semantic_stack.append(temp)
             
     def code(self, action: str = '', *args) -> str:

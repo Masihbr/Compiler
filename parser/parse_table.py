@@ -101,7 +101,7 @@ PARSE_TABLE = {
         'if': ('if', 'Relational_Expression', '#save', ':', 'Statements', 'Else_block'), # If_stmt -> if Relational_Expression #save : Statements Else_block
     },
     'Else_block': {
-        ';': (EPSILON, 'jpf'), # Else_block -> '' #jpf
+        ';': (EPSILON, '#jpf'), # Else_block -> '' #jpf
         'else': ('else', ':', '#jpf_save', 'Statements', '#jp'), # Else_block -> else : #jpf_save Statements #jp
     },
     'Iteration_stmt': {
