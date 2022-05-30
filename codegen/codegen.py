@@ -8,7 +8,6 @@ class TempManager:
     def __init__(self, start_address:int=1500, step:int=4):
         self.current_temp = start_address
         self._step = step
-        self.increase_amount = increase_amount
 
     def get_temp(self):
         addr = self.current_temp
