@@ -32,7 +32,7 @@ If_stmt -> if Relational_Expression #save : Statements Else_block
 Else_block -> else : #jpf_save Statements #jp
 Else_block -> '' #jpf
 Iteration_stmt -> while ( Relational_Expression ) Statements
-Relational_Expression -> Expression Relop Expression
+Relational_Expression -> Expression #comp_op Relop Expression #comp
 Relop -> ==
 Relop -> <
 Expression -> Term Expression_Prime

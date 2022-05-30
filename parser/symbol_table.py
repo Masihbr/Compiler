@@ -17,8 +17,9 @@ class Symbol:
         return f'{self._lexeme:<10} {self._address:<10} {self._type:<10} {self._line:<10}'
 
 class SymbolTable:
-    def __init__(self, start_address:int=100) -> None:
+    def __init__(self, start_address:int=100, step:int=4) -> None:
         self._current_address = start_address
+        self._step = step
         self._symbols = list()
     
     def find_addr(self, lexeme:str=''):
@@ -33,7 +34,7 @@ class SymbolTable:
     
     def get_address(self):
         addr = self._current_address
-        self._current_address += 4
+        self._current_address += self._step
         return addr
     
     def add_symbol(self, lexeme:str='', _type:str='', line:int=0):

@@ -109,10 +109,10 @@ PARSE_TABLE = {
         'while': ('while', '(', 'Relational_Expression', ')', 'Statements'),
     },
     'Relational_Expression': {
-        'ID': ('Expression', 'Relop', 'Expression'),
+        'ID': ('Expression', '#comp_op', 'Relop', 'Expression', '#comp'), # Relational_Expression -> Expression #comp_op Relop Expression #comp
         ')': SYNCHRONOUS,
         ':': SYNCHRONOUS,
-        'NUM': ('Expression', 'Relop', 'Expression'),
+        'NUM': ('Expression', '#comp_op', 'Relop', 'Expression', '#comp'), # Relational_Expression -> Expression #comp_op Relop Expression #comp
     },
     'Relop': {
         'ID': SYNCHRONOUS,
