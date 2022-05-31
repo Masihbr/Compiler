@@ -1,3 +1,4 @@
+from ast import Index
 from collections import deque
 import warnings
 
@@ -26,18 +27,22 @@ class CodeGenerator:
         self._semantic_stack = deque()
         self._temp_generator = TempManager()
         self._symbol_table = symbol_table
+        self._first_func_seen = True # set to false after seeing the first function other than main
         self._generator = {
             '#pid': self.pid,
             '#pnum': self.pnum,
             '#assign': self.assign,
             '#func_call_finish': self.func_call_finish,
             '#save': self.save,
+            '#save_func': self.save_func,
             '#jpf': self.jpf,
             '#jpf_save': self.jpf_save,
             '#jp': self.jp,
             '#comp': self.comp,
             '#comp_op': self.comp_op,
             '#set_func_start': self.set_func_start,
+            '#jump_main': self.jump_main,
+            '#func_def_finish': self.func_def_finish,
         }
 
     @property
@@ -110,7 +115,25 @@ class CodeGenerator:
          
     def set_func_start(self) -> None:
         self._symbol_table.set_pb_line(self.pb_len)
-           
+    
+    def jump_main(self) -> None:
+        try: # if code only has the main function no need for jump
+            self._program_block[self._semantic_stack.pop()] = self.code('JP', self._symbol_table.get_pb_line(lexeme='main'))
+        except IndexError:
+            Warning('Only main function present.')
+            return
+    
+    def save_func(self) -> None:
+        func_address = self._semantic_stack.pop()
+        if  self._symbol_table.find_lexeme(func_address) != 'main' \
+            and self._first_func_seen: # don't save main - don't save after first function
+            self.save()
+            self._first_func_seen = False
+        self._semantic_stack.append(func_address)
+    
+    def func_def_finish(self) -> None:
+        self._semantic_stack.pop()
+      
     def code(self, action: str = '', *args) -> str:
         args_len = len(args)
         if action == '':
@@ -134,4 +157,8 @@ class CodeGenerator:
             res += f'{line}\t{code}\n'
             line += 1
         return res
+    
+    def get_status(self):
+        return {'semantic_stack': self._semantic_stack,
+                'program_block': self._program_block}
         

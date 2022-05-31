@@ -3,15 +3,15 @@ SYNCHRONOUS = 'synch'
 
 PARSE_TABLE = {
     'Program': {
-        'break': ('Statements',),
-        'continue': ('Statements',),
-        'ID': ('Statements',),
-        'return': ('Statements',),
-        'global': ('Statements',),
-        'def': ('Statements',),
-        'if': ('Statements',),
-        'while': ('Statements',),
-        '$': ('Statements',),
+        'break': ('Statements', '#jump_main'), # Program -> Statements #jump_main
+        'continue': ('Statements', '#jump_main'),
+        'ID': ('Statements', '#jump_main'),
+        'return': ('Statements', '#jump_main'),
+        'global': ('Statements', '#jump_main'),
+        'def': ('Statements', '#jump_main'),
+        'if': ('Statements', '#jump_main'),
+        'while': ('Statements', '#jump_main'),
+        '$': ('Statements', '#jump_main'),
     },
     'Statements': {
         ';': EPSILON,
@@ -47,7 +47,7 @@ PARSE_TABLE = {
     },
     'Compound_stmt': {
         ';': SYNCHRONOUS,
-        'def': ('Function_def',),
+        'def': ('Function_def',), # Compound_stmt -> Function_def
         'if': ('If_stmt',),
         'while': ('Iteration_stmt',),
     },
@@ -86,7 +86,7 @@ PARSE_TABLE = {
     },
     'Function_def': {
         ';': SYNCHRONOUS,
-        'def': ('def', '#pid', 'ID', '#set_func_start', '(', 'Params', ')', ':', 'Statements'), # Function_def -> def #pid ID #set_func_start ( Params ) : Statements
+        'def': ('def', '#pid', 'ID', '#set_func_start', '#save_func', '(', 'Params', ')', ':', 'Statements', '#func_def_finish'), # Function_def -> def #pid ID #set_func_start #save_func ( Params ) : Statements #func_def_finish
     },
     'Params': {
         'ID': ('#pid', 'ID', 'Params_Prime'), # Params -> #pid ID Params_Prime

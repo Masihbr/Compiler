@@ -1,4 +1,5 @@
 from collections import deque, defaultdict
+from pprint import pprint
 from tokenize import Token
 from codegen.codegen import CodeGenerator
 from parser.parse_table import PARSE_TABLE, SYNCHRONOUS
@@ -52,6 +53,9 @@ class Parser:
 
     def codegen(self) -> None:
         action_symbol = self._stack.pop()
+        print(action_symbol)
+        pprint(self._code.get_status())
+        print(f'{"--":-^18}')
         self._code.generate(action_symbol=action_symbol, input=self.lexeme)
     
     def codeparse(self) -> bool:
