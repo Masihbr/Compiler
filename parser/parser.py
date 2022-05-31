@@ -8,7 +8,12 @@ from utils.file_handler import write_all
 from scanner.scanner import Scanner, TokenType
 from anytree import Node, RenderTree
 
-
+class ParamCounter:
+    def __init__(self) -> None:
+        self.symbol = None
+        self.seen_def = False
+        self.seen_par = False
+        self.count = 0
 class Parser:
     def __init__(self):
         self._symbol_table = SymbolTable()
@@ -19,6 +24,7 @@ class Parser:
         self._root = Node('Program')
         self._tree = deque([Node('$', parent=self._root), self._root])
         self._current_token = None
+        self._param_counter = ParamCounter()
         self._errors = defaultdict(list)
 
     @property
@@ -136,8 +142,18 @@ class Parser:
 
     def advance_input(self):
         self._current_token = self._scanner.get_next_token()
-        if self._current_token[0] == TokenType.ID:
-            self._symbol_table.add_symbol(lexeme=self._current_token[1], line=self.lineno)
+        if self._current_token[1] == 'def':
+            self._param_counter.seen_def = True
+        if self._param_counter.seen_def and self._current_token[1] == '(':
+            self._param_counter.seen_par = True
+        if self._param_counter.seen_def and self._param_counter.seen_par and self._current_token[1] == ')':
+            self._param_counter = ParamCounter()
+        if self._current_token[0] == TokenType.ID:            
+            symbol = self._symbol_table.add_symbol(lexeme=self._current_token[1], line=self.lineno)
+            if self._param_counter.seen_def and not self._param_counter.seen_par:
+                self._param_counter.symbol = symbol
+            elif self._param_counter.seen_par:
+                self._symbol_table.inc_args(self._param_counter.symbol)
         if self._current_token[0] in [TokenType.WHITESPACE, TokenType.COMMENT]:
             self.advance_input()
 
