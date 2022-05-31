@@ -86,7 +86,7 @@ PARSE_TABLE = {
     },
     'Function_def': {
         ';': SYNCHRONOUS,
-        'def': ('def', '#pid', 'ID', '(', 'Params', ')', ':', 'Statements'), # Function_def -> def #pid ID ( Params ) : Statements
+        'def': ('def', '#pid', 'ID', '#set_func_start', '(', 'Params', ')', ':', 'Statements'), # Function_def -> def #pid ID #set_func_start ( Params ) : Statements
     },
     'Params': {
         'ID': ('#pid', 'ID', 'Params_Prime'), # Params -> #pid ID Params_Prime

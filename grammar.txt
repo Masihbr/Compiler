@@ -23,7 +23,7 @@ Return_stmt -> return Return_Value
 Return_Value -> Expression
 Return_Value -> ''
 Global_stmt -> global ID
-Function_def -> def #pid ID ( Params ) : Statements
+Function_def -> def #pid ID #set_func_start ( Params ) : Statements
 Params -> #pid ID Params_Prime
 Params -> ''
 Params_Prime -> , #pid ID Params_Prime

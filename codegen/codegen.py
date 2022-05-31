@@ -37,8 +37,13 @@ class CodeGenerator:
             '#jp': self.jp,
             '#comp': self.comp,
             '#comp_op': self.comp_op,
+            '#set_func_start': self.set_func_start,
         }
 
+    @property
+    def pb_len(self):
+        return len(self._program_block)
+    
     def generate(self, action_symbol: str, input: str):
         try:
             if action_symbol in {'#pid', '#pnum', '#comp_op'}:  # set of actions which need input for operation
@@ -69,7 +74,7 @@ class CodeGenerator:
             self._program_block.append(self.code('PRINT', out))
 
     def save(self):
-        self._semantic_stack.append(len(self._program_block))
+        self._semantic_stack.append(self.pb_len)
         self._program_block.append(self.code())
     
     def jpf_save(self):
@@ -78,13 +83,13 @@ class CodeGenerator:
     
     def jp(self):
         jump_address = self._semantic_stack.pop()
-        current_address = len(self._program_block) - 1
+        current_address = self.pb_len - 1
         self._program_block[jump_address] = self.code('JP', current_address) 
         
     def jpf(self):
         jump_address = self._semantic_stack.pop()
         jump_condition = self._semantic_stack.pop()
-        current_address = len(self._program_block) + 1
+        current_address = self.pb_len + 1
         self._program_block[jump_address] = self.code('JPF', jump_condition, current_address)
     
     def comp_op(self, input:str):
@@ -102,10 +107,13 @@ class CodeGenerator:
         temp = self._temp_generator.get_temp()
         self._program_block.append(self.code(action, lhs, rhs, temp))
         self._semantic_stack.append(temp)
-            
+         
+    def set_func_start(self) -> None:
+        self._symbol_table.set_pb_line(self.pb_len)
+           
     def code(self, action: str = '', *args) -> str:
         args_len = len(args)
-        if len(action) == 0:
+        if action == '':
             return f'( , , , )'
         if args_len > 3:
             raise Exception('Wrong inputs')
