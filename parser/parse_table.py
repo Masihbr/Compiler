@@ -59,7 +59,7 @@ PARSE_TABLE = {
         ';': SYNCHRONOUS,
         '=': ('=', 'C', '#assign'), # = C #assign
         '[': ('[', 'Expression', ']', '=', 'C', '#assign'), # B -> [ Expression ] = C #assign
-        '(': ('#func_call_start', '(', 'Arguments', ')', '#func_call_finish'), # B -> #func_call_start ( Arguments ) #func_call_finish
+        '(': ('#func_call_start', '(', 'Arguments', ')', '#func_call_finish', '#pop'), # B -> #func_call_start ( Arguments ) #func_call_finish #pop
     },
     'C': {
         ';': SYNCHRONOUS,
@@ -166,7 +166,7 @@ PARSE_TABLE = {
         '<': EPSILON,
         '+': EPSILON,
         '-': EPSILON,
-        '*': ('*', 'Factor', 'Term_Prime'),
+        '*': ('*', 'Factor', '#mult', 'Term_Prime'), # Term_Prime -> * Factor #mult Term_Prime
     },
     'Factor': {
         ';': SYNCHRONOUS,

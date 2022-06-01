@@ -59,9 +59,9 @@ class Parser:
 
     def codegen(self) -> None:
         action_symbol = self._stack.pop()
-        print(action_symbol)
+        print(self.lineno, action_symbol)
         pprint(self._code.get_status())
-        print(f'{"--":-^18}')
+        print(f'{"--":-^48}')
         self._code.generate(action_symbol=action_symbol, input=self.lexeme)
     
     def codeparse(self) -> bool:

@@ -14,7 +14,7 @@ Compound_stmt -> Iteration_stmt
 Assignment_Call -> #pid ID B
 B -> = C #assign
 B -> [ Expression ] = C #assign
-B -> #func_call_start ( Arguments ) #func_call_finish
+B -> #func_call_start ( Arguments ) #func_call_finish #pop
 C -> Expression
 C -> [ Expression List_Rest ]
 List_Rest -> , Expression List_Rest
@@ -40,7 +40,7 @@ Expression_Prime -> + Term #add Expression_Prime
 Expression_Prime -> - Term #sub Expression_Prime
 Expression_Prime -> ''
 Term -> Factor Term_Prime
-Term_Prime -> * Factor Term_Prime
+Term_Prime -> * Factor #mult Term_Prime
 Term_Prime -> ''
 Factor -> Atom Power
 Power -> ** Factor

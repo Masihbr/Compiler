@@ -90,8 +90,13 @@ class SymbolTable:
     def inc_args(self, symbol):
         symbol.args_cells += 1
     
-    def get_func_args_count(self) -> int:
-        symbol = self._get_symbol(category='func')
+    def get_func_args_count(self, lexeme:str=None, addr:str=None) -> int:
+        if lexeme:
+            symbol = self._get_symbol(lexeme=lexeme)
+        elif addr:
+            symbol = self._get_symbol(addr=addr)
+        else:    
+            symbol = self._get_symbol(category='func')
         return symbol.args_cells if symbol else None
     
     def __str__(self) -> str:

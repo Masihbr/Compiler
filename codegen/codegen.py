@@ -38,8 +38,10 @@ class CodeGenerator:
             '#pop_func_address': self.pop_func_address,
             '#add': self.add,
             '#sub': self.sub,
+            '#mult': self.mult,
             '#while': self._while,
             '#break': self._break,
+            '#pop': self.pop,
         }
     
     @property
@@ -54,7 +56,10 @@ class CodeGenerator:
     def code(self):
         return self._program_block.code
     
-    def generate(self, action_symbol: str, input: str):
+    def pop(self) -> None:
+        self._semantic_stack.pop()
+    
+    def generate(self, action_symbol: str, input: str) -> None:
         try:
             if action_symbol in {'#pid', '#pnum', '#comp_op'}:  # set of actions which need input for operation
                 self._generator[action_symbol](input)
@@ -98,7 +103,6 @@ class CodeGenerator:
         jump_address = self._semantic_stack.pop()
         jump_condition = self._semantic_stack.pop()
         current_address = self.pb_len + inc
-        print('pb_len', self.pb_len)
         self.program_block[jump_address] = self.code('JPF', jump_condition, current_address)
     
     def comp_op(self, input:str):
@@ -173,7 +177,7 @@ class CodeGenerator:
     
     def func_call_finish(self) -> None:
         if self._output_func_active:
-            out, _ = self._semantic_stack.pop(), self._semantic_stack.pop()
+            out = self._semantic_stack.pop()
             self.program_block.append(self.code('PRINT', out))
             self._output_func_active = False
             return
@@ -187,18 +191,21 @@ class CodeGenerator:
         
         return_value = self._func_stack.pop()
         self._semantic_stack.append(return_value)
-        args_count = self._symbol_table.get_func_args_count()
+        args_count = self._symbol_table.get_func_args_count(addr=func_address)
         self._func_stack.pop()
         for _ in range(args_count):
             self._func_stack.pop()
         
     def add(self):
-        self._add_sub('ADD')
+        self.arith('ADD')
     
     def sub(self):
-        self._add_sub('SUB')
+        self.arith('SUB')
     
-    def _add_sub(self, action:str='ADD'):
+    def mult(self):
+        self.arith('MULT')
+    
+    def arith(self, action:str='ADD'):
         temp = self._temp_manager.get_temp()
         lhs = self._semantic_stack.pop()
         rhs = self._semantic_stack.pop()
@@ -207,7 +214,6 @@ class CodeGenerator:
     
     def _while(self):
         breaks = [self._break_stack.pop() for _ in range(len(self._break_stack))]
-        print(breaks)
         pb_address = self._semantic_stack.pop()
         jump_condition = self._semantic_stack.pop() 
         while_address = self._semantic_stack.pop()
@@ -229,7 +235,7 @@ class CodeGenerator:
     def get_status(self):
         return {
                 'semantic_stack': self._semantic_stack,
-                'program_block': self.program_block,
+                'program_block': self.program_block[-10:],
                 'func_stack': self._func_stack.shadow_stack,
                 }
         
