@@ -152,6 +152,7 @@ class Parser:
             symbol = self._symbol_table.add_symbol(lexeme=self._current_token[1], line=self.lineno)
             if self._param_counter.seen_def and not self._param_counter.seen_par:
                 self._param_counter.symbol = symbol
+                symbol.category = 'func'
             elif self._param_counter.seen_par:
                 self._symbol_table.inc_args(self._param_counter.symbol)
         if self._current_token[0] in [TokenType.WHITESPACE, TokenType.COMMENT]:

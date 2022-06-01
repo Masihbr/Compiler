@@ -1,3 +1,6 @@
+from nis import cat
+
+
 class Symbol:
     def __init__(self, lexeme:str='', address:int=0, category:str='var', _type:str='', line:int=0) -> None:
         self._lexeme = lexeme
@@ -36,6 +39,10 @@ class Symbol:
     def args_cells(self, val):
         self._args_cells = val
     
+    @category.setter
+    def category(self, val):
+        self._category = val
+    
     def __str__(self) -> str:
         return f'{self._lexeme:<10} {self._address:<10} {self._pb_line:<10} {self._category:<10} {self._args_cells:<10} {self._type:<10} {self._line:<10}'
 
@@ -67,7 +74,7 @@ class SymbolTable:
     
     def add_symbol(self, lexeme:str='', _type:str='', line:int=0) -> Symbol:
         if not self.find_addr(lexeme):
-            symbol = Symbol(lexeme, self.get_address(), _type, line)
+            symbol = Symbol(lexeme, self.get_address(), _type=_type, line=line)
             self._symbols.append(symbol)
             return symbol
     
