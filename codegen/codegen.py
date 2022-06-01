@@ -14,10 +14,12 @@ class CodeGenerator:
         self._symbol_table = symbol_table
         self._first_func_seen = True # set to false after seeing the first function other than main
         self._output_func_active = False 
+        self._break_stack = deque() # save breaks then fill them
         self._generator = {
             '#pid': self.pid,
             '#pnum': self.pnum,
             '#assign': self.assign,
+            '#label': self.label,
             '#save': self.save,
             '#save_func': self.save_func,
             '#jpf': self.jpf,
@@ -36,6 +38,8 @@ class CodeGenerator:
             '#pop_func_address': self.pop_func_address,
             '#add': self.add,
             '#sub': self.sub,
+            '#while': self._while,
+            '#break': self._break,
         }
     
     @property
@@ -59,38 +63,42 @@ class CodeGenerator:
         except KeyError:
             warnings.warn(f'Sorry {action_symbol} not implemented yet.')
 
-    def pid(self, lexeme):
+    def pid(self, lexeme) -> None:
         addr = self._symbol_table.find_addr(lexeme)
         if addr:
             self._semantic_stack.append(addr)
         else:
             raise Exception(f'Address of {lexeme} not found.')
 
-    def pnum(self, number):
+    def pnum(self, number) -> None:
         self._semantic_stack.append("#" + number)
     
-    def assign(self):
+    def assign(self) -> None:
         lhs = self._semantic_stack.pop()
         rhs = self._semantic_stack.pop()
         self.program_block.append(self.code('ASSIGN', lhs, rhs))
 
-    def save(self):
+    def label(self) -> None:
+        self._semantic_stack.append(self.pb_len)
+
+    def save(self) -> None:
         self._semantic_stack.append(self.pb_len)
         self.program_block.append(self.code())
     
-    def jpf_save(self):
-        self.jpf()
+    def jpf_save(self) -> None:
+        self.jpf(inc=1)
         self.save()
     
-    def jp(self):
+    def jp(self) -> None:
         jump_address = self._semantic_stack.pop()
-        current_address = self.pb_len - 1
+        current_address = self.pb_len 
         self.program_block[jump_address] = self.code('JP', current_address) 
         
-    def jpf(self):
+    def jpf(self, inc:int=0) -> None:
         jump_address = self._semantic_stack.pop()
         jump_condition = self._semantic_stack.pop()
-        current_address = self.pb_len + 1
+        current_address = self.pb_len + inc
+        print('pb_len', self.pb_len)
         self.program_block[jump_address] = self.code('JPF', jump_condition, current_address)
     
     def comp_op(self, input:str):
@@ -144,7 +152,7 @@ class CodeGenerator:
             return 
         
         return_value = self._semantic_stack.pop()
-        self._func_stack.push(return_value) # problem with order
+        self._func_stack.push(return_value) # may have problem with order
         return_address = self._func_stack.access(2)
         self.program_block.append(self.code('JP', f'@{return_address}'))        
         
@@ -196,6 +204,24 @@ class CodeGenerator:
         rhs = self._semantic_stack.pop()
         self.program_block.append(self.code(action, rhs, lhs, temp))
         self._semantic_stack.append(temp)
+    
+    def _while(self):
+        breaks = [self._break_stack.pop() for _ in range(len(self._break_stack))]
+        print(breaks)
+        pb_address = self._semantic_stack.pop()
+        jump_condition = self._semantic_stack.pop() 
+        while_address = self._semantic_stack.pop()
+        jump_out_address = self.pb_len + 1
+        self.program_block[pb_address] = self.code('JPF', jump_condition, jump_out_address)
+        self.program_block.append(self.code('JP', while_address))
+        for break_address in breaks:
+            self.program_block[break_address] = self.code('JP', jump_out_address)
+        self._break_count = 0
+            
+    
+    def _break(self):
+        self._break_stack.append(self.pb_len)
+        self.program_block.append(self.code('JP', '?'))
     
     def get_program_block(self) -> str:
         return self._program_block.str_program_block()

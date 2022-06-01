@@ -39,7 +39,7 @@ PARSE_TABLE = {
     },
     'Simple_stmt': {
         ';': SYNCHRONOUS,
-        'break': ('break',),
+        'break': ('break', '#break'), # Simple_stmt -> break #break
         'continue': ('continue',),
         'ID': ('Assignment_Call',),
         'return': ('Return_stmt',),
@@ -107,7 +107,7 @@ PARSE_TABLE = {
     },
     'Iteration_stmt': {
         ';': SYNCHRONOUS,
-        'while': ('while', '(', 'Relational_Expression', ')', 'Statements'),
+        'while': ('while', '#label', '(', 'Relational_Expression', ')', '#save', 'Statements', '#while'), # Iteration_stmt -> while #label ( Relational_Expression ) #save Statements #while
     },
     'Relational_Expression': {
         'ID': ('Expression', '#comp_op', 'Relop', 'Expression', '#comp'), # Relational_Expression -> Expression #comp_op Relop Expression #comp
