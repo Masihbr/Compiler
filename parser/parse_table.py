@@ -140,8 +140,8 @@ PARSE_TABLE = {
         ':': EPSILON,
         '==': EPSILON,
         '<': EPSILON,
-        '+': ('+', 'Term', 'Expression_Prime'),
-        '-': ('-', 'Term', 'Expression_Prime'),
+        '+': ('+', 'Term', '#add', 'Expression_Prime'), # Expression_Prime -> + Term #add Expression_Prime
+        '-': ('-', 'Term', '#sub', 'Expression_Prime'), # Expression_Prime -> + Term #sub Expression_Prime
     },
     'Term': {
         ';': SYNCHRONOUS,

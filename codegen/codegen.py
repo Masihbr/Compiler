@@ -34,6 +34,8 @@ class CodeGenerator:
             '#func_call_finish': self.func_call_finish,
             '#add_arg': self.add_arg,
             '#pop_func_address': self.pop_func_address,
+            '#add': self.add,
+            '#sub': self.sub,
         }
     
     @property
@@ -182,6 +184,18 @@ class CodeGenerator:
         for _ in range(args_count):
             self._func_stack.pop()
         
+    def add(self):
+        self._add_sub('ADD')
+    
+    def sub(self):
+        self._add_sub('SUB')
+    
+    def _add_sub(self, action:str='ADD'):
+        temp = self._temp_manager.get_temp()
+        lhs = self._semantic_stack.pop()
+        rhs = self._semantic_stack.pop()
+        self.program_block.append(self.code(action, rhs, lhs, temp))
+        self._semantic_stack.append(temp)
     
     def get_program_block(self) -> str:
         return self._program_block.str_program_block()

@@ -36,8 +36,8 @@ Relational_Expression -> Expression #comp_op Relop Expression #comp
 Relop -> ==
 Relop -> <
 Expression -> Term Expression_Prime
-Expression_Prime -> + Term Expression_Prime
-Expression_Prime -> - Term Expression_Prime
+Expression_Prime -> + Term #add Expression_Prime
+Expression_Prime -> - Term #sub Expression_Prime
 Expression_Prime -> ''
 Term -> Factor Term_Prime
 Term_Prime -> * Factor Term_Prime
