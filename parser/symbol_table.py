@@ -52,11 +52,13 @@ class SymbolTable:
         self._step = step
         self._symbols = list()
     
-    def _get_symbol(self, lexeme:str=None, addr:int=None) -> Symbol:
+    def _get_symbol(self, lexeme:str=None, addr:int=None, category:str=None) -> Symbol:
         for symbol in self._symbols[::-1]:
             if symbol.lexeme == lexeme:
                 return symbol
             elif symbol.address == addr:
+                return symbol
+            elif symbol.category == category:
                 return symbol
     
     def find_addr(self, lexeme:str='') -> int:
@@ -87,6 +89,10 @@ class SymbolTable:
     
     def inc_args(self, symbol):
         symbol.args_cells += 1
+    
+    def get_func_args_count(self) -> int:
+        symbol = self._get_symbol(category='func')
+        return symbol.args_cells if symbol else None
     
     def __str__(self) -> str:
         res = f'{"":<4}{"lexeme":<10} {"address":<10} {"PB_line":<10} {"category":<10} {"args_cells":<10} {"type":<10} {"line":<10}\n'

@@ -1,3 +1,4 @@
+from collections import deque
 from codegen.program_block import ProgramBlock
 from codegen.temp_manager import TempManager
 
@@ -7,8 +8,9 @@ class Stack:
         self._program_block = program_block
         self._temp_manager = temp_manager
         self._sp = sp
-        self._pointer = 0
+        self._start = point
         self._step = step
+        self.shadow_stack = deque()
         self.program_block.append(self.code('ASSIGN', f'#{point}', self._sp))
 
     @property
@@ -23,26 +25,31 @@ class Stack:
     def code(self):
         return self._program_block.code
 
+    @property 
+    def is_empty(self):
+        return self._sp == self._start
+        
     def push(self, value) -> None:
-        temp = self._temp_manager.get_temp()
-        self.program_block.append(
-            self.code('ADD', {self._sp}, f'#{self._pointer}', temp))
-        self.program_block.append(self.code('ASSIGN', value, f'@{temp}'))
-        self._pointer += self._step
+        self.shadow_stack.append(value)
+        self.program_block.append(self.code('ASSIGN', value, f'@{self._sp}'))
+        self.program_block.append(self.code('ADD', self._sp, f'#{self._step}', self._sp))
+        self._start += self._step
 
     def pop(self) -> int:
-        temp1, temp2 = self._temp_manager.get_temp(), self._temp_manager.get_temp()
-        if self._pointer > 0:
-            self._pointer -= self._step
-            self.program_block.append(
-                self.code('ADD', {self._sp}, f'#{self._pointer}', temp1))
-            self.program_block.append(self.code('ASSIGN', f'@{temp1}', temp2))
-            return temp2
+        temp = self._temp_manager.get_temp()
+        self.program_block.append(self.code('SUB', self._sp, f'#{self._step}', self._sp))
+        self.program_block.append(self.code('ASSIGN', f'@{self._sp}', temp))
+        self.shadow_stack.pop()
+        return temp
 
+    def pop_all(self) -> list:
+        res = []
+        while not self.is_empty():
+            res.append(self.pop())
+        return res
+    
     def access(self, offset: int) -> int:
         temp1, temp2 = self._temp_manager.get_temp(), self._temp_manager.get_temp()
-        _pointer = self._pointer - offset * self._step
-        self.program_block.append(
-            self.code('ADD', {self._sp}, f'#{_pointer}', temp1))
+        self.program_block.append(self.code('SUB', self._sp, f'#{offset * self._step}', temp1))
         self.program_block.append(self.code('ASSIGN', f'@{temp1}', temp2))
         return temp2

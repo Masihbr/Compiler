@@ -13,11 +13,11 @@ class CodeGenerator:
         self._func_stack = Stack(self._program_block, self._temp_manager)
         self._symbol_table = symbol_table
         self._first_func_seen = True # set to false after seeing the first function other than main
+        self._output_func_active = False 
         self._generator = {
             '#pid': self.pid,
             '#pnum': self.pnum,
             '#assign': self.assign,
-            '#func_call_finish': self.func_call_finish,
             '#save': self.save,
             '#save_func': self.save_func,
             '#jpf': self.jpf,
@@ -27,7 +27,13 @@ class CodeGenerator:
             '#comp_op': self.comp_op,
             '#set_func_start': self.set_func_start,
             '#jump_main': self.jump_main,
+            '#func_def_start': self.func_def_start,
+            '#push_zero': self.push_zero,
             '#func_def_finish': self.func_def_finish,
+            '#func_call_start': self.func_call_start,
+            '#func_call_finish': self.func_call_finish,
+            '#add_arg': self.add_arg,
+            '#pop_func_address': self.pop_func_address,
         }
     
     @property
@@ -65,11 +71,6 @@ class CodeGenerator:
         lhs = self._semantic_stack.pop()
         rhs = self._semantic_stack.pop()
         self.program_block.append(self.code('ASSIGN', lhs, rhs))
-
-    def func_call_finish(self):
-        if self._symbol_table.find_lexeme(self._semantic_stack[-2]) == 'output':
-            out, _ = self._semantic_stack.pop(), self._semantic_stack.pop()
-            self.program_block.append(self.code('PRINT', out))
 
     def save(self):
         self._semantic_stack.append(self.pb_len)
@@ -124,13 +125,71 @@ class CodeGenerator:
             self._first_func_seen = False
         self._semantic_stack.append(func_address)
     
+    def func_def_start(self) -> None:
+        args_count = self._symbol_table.get_func_args_count()
+        args_start = 2 # args start point in stack
+        for offset in range(args_start, args_start + args_count): # 
+            arg = self._semantic_stack.pop()
+            temp = self._func_stack.access(offset)
+            self.program_block.append(self.code('ASSIGN', temp, arg))
+    
+    def push_zero(self)-> None:
+        self._semantic_stack.append('#0') # return value of func is 0 if no return expr
+            
     def func_def_finish(self) -> None:
-        self._semantic_stack.pop()
-      
+        if self._symbol_table.find_lexeme(self._semantic_stack[-2]) == 'main':
+            self._semantic_stack.pop()
+            return 
+        
+        return_value = self._semantic_stack.pop()
+        self._func_stack.push(return_value) # problem with order
+        return_address = self._func_stack.access(2)
+        self.program_block.append(self.code('JP', f'@{return_address}'))        
+        
+    def pop_func_address(self) -> None:
+        self._semantic_stack.pop() # pop func addr
+        
+    def func_call_start(self) -> None:
+        func_name = self._symbol_table.find_lexeme(self._semantic_stack[-1]) 
+        if func_name == 'output':
+            self._output_func_active = True
+    
+    def add_arg(self) -> None:
+        if self._output_func_active:
+            return
+        
+        arg = self._semantic_stack.pop()
+        self._func_stack.push(arg)  
+    
+    def func_call_finish(self) -> None:
+        if self._output_func_active:
+            out, _ = self._semantic_stack.pop(), self._semantic_stack.pop()
+            self.program_block.append(self.code('PRINT', out))
+            self._output_func_active = False
+            return
+        
+        func_address = self._semantic_stack.pop() 
+        func_pb_line = self._symbol_table.get_pb_line(addr=func_address)
+        
+        current_pb_line = self.pb_len
+        self._func_stack.push(f'#{current_pb_line + 3}')
+        self.program_block.append(self.code('JP', func_pb_line))
+        
+        return_value = self._func_stack.pop()
+        self._semantic_stack.append(return_value)
+        args_count = self._symbol_table.get_func_args_count()
+        self._func_stack.pop()
+        for _ in range(args_count):
+            self._func_stack.pop()
+        
+    
     def get_program_block(self) -> str:
         return self._program_block.str_program_block()
     
     def get_status(self):
-        return {'semantic_stack': self._semantic_stack,
-                'program_block': self.program_block}
+        return {
+                'semantic_stack': self._semantic_stack,
+                'program_block': self.program_block,
+                'func_stack': self._func_stack.shadow_stack,
+                }
         
