@@ -86,16 +86,16 @@ PARSE_TABLE = {
     },
     'Function_def': {
         ';': SYNCHRONOUS,
-        'def': ('def', '#pid', 'ID', '#save_func', '#set_func_start', '(', 'Params', ')', '#func_def_start', ':', 'Statements', '#push_zero', '#func_def_finish', '#pop_func_address'), 
-        # Function_def -> def #pid ID #save_func #set_func_start ( Params ) #func_def_start : Statements #push_zero #func_def_finish #pop_func_address
+        'def': ('def', '#pfunc', 'ID', '#save_func', '#set_func_start', '(', 'Params', ')', '#func_def_start', ':', 'Statements', '#push_zero', '#func_def_finish', '#pop_func_address'), 
+        # Function_def -> def #pfunc ID #save_func #set_func_start ( Params ) #func_def_start : Statements #push_zero #func_def_finish #pop_func_address
     },
     'Params': {
-        'ID': ('#pid', 'ID', 'Params_Prime'), # Params -> #pid ID Params_Prime
+        'ID': ('#pparam', 'ID', 'Params_Prime'), # Params -> #pparam ID Params_Prime
         ')': EPSILON,
     },
     'Params_Prime': {
         ')': EPSILON,
-        ',': (',', '#pid', 'ID', 'Params_Prime'), # Params -> #pid ID Params_Prime
+        ',': (',', '#pparam', 'ID', 'Params_Prime'), # Params -> #pparam ID Params_Prime
     },
     'If_stmt': {
         ';': SYNCHRONOUS,

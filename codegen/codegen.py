@@ -1,4 +1,5 @@
 from collections import deque
+from nis import cat
 import warnings
 from codegen.stack import Stack
 from codegen.program_block import ProgramBlock
@@ -18,6 +19,8 @@ class CodeGenerator:
         self._generator = {
             '#pid': self.pid,
             '#pnum': self.pnum,
+            '#pparam': self.pparam,
+            '#pfunc': self.pfunc,
             '#assign': self.assign,
             '#label': self.label,
             '#save': self.save,
@@ -61,7 +64,7 @@ class CodeGenerator:
     
     def generate(self, action_symbol: str, input: str) -> None:
         try:
-            if action_symbol in {'#pid', '#pnum', '#comp_op'}:  # set of actions which need input for operation
+            if action_symbol in {'#pid', '#pnum', '#pparam', '#pfunc', '#comp_op'}:  # set of actions which need input for operation
                 self._generator[action_symbol](input)
             else:
                 self._generator[action_symbol]()
@@ -76,7 +79,17 @@ class CodeGenerator:
             raise Exception(f'Address of {lexeme} not found.')
 
     def pnum(self, number) -> None:
-        self._semantic_stack.append("#" + number)
+        temp = self._temp_manager.get_temp()
+        self.program_block.append(self.code('ASSIGN', f'#{number}', temp))
+        self._semantic_stack.append(temp)
+    
+    def pparam(self, lexeme:str) -> None:
+        self._symbol_table.set_param(lexeme=lexeme)
+        self.pid(lexeme=lexeme)
+    
+    def pfunc(self, lexeme:str) -> None:
+        self._symbol_table.set_category(lexeme=lexeme, category='func')
+        self.pid(lexeme=lexeme)
     
     def assign(self) -> None:
         lhs = self._semantic_stack.pop()

@@ -23,10 +23,10 @@ Return_stmt -> return Return_Value #func_def_finish
 Return_Value -> Expression 
 Return_Value -> '' #push_zero
 Global_stmt -> global ID
-Function_def -> def #pid ID #save_func #set_func_start ( Params ) #func_def_start : Statements #push_zero #func_def_finish #pop_func_address
-Params -> #pid ID Params_Prime
+Function_def -> def #pfunc ID #save_func #set_func_start ( Params ) #func_def_start : Statements #push_zero #func_def_finish #pop_func_address
+Params -> #pparam ID Params_Prime
 Params -> ''
-Params_Prime -> , #pid ID Params_Prime
+Params_Prime -> , #pparam ID Params_Prime
 Params_Prime -> ''
 If_stmt -> if Relational_Expression #save : Statements Else_block
 Else_block -> else : #jpf_save Statements #jp

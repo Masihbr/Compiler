@@ -87,7 +87,7 @@ class SymbolTable:
         self._current_address += self._step
         return addr
     
-    def add_symbol(self, lexeme:str='', _type:str='', line:int=0, category:str='') -> Symbol:
+    def add_symbol(self, lexeme:str='', _type:str='', line:int=0, category:str='var') -> Symbol:
         if not self.find_addr(lexeme):
             symbol = Symbol(lexeme, self.get_address(), _type=_type, line=line, category=category)
             self._symbols.append(symbol)
@@ -95,6 +95,14 @@ class SymbolTable:
     
     def set_pb_line(self, line:int) -> None:
         self._symbols[-1].pb_line = line
+    
+    def set_param(self, lexeme:str=None, addr:int=None):
+        self.set_category(lexeme=lexeme, addr=addr, category='param')
+        self.inc_args(self._get_symbol(category='func'))
+        
+    def set_category(self, lexeme:str=None, addr:int=None, category:str='var'):
+        symbol = self._get_symbol(lexeme=lexeme, addr=addr)
+        symbol.category = category if symbol else None
     
     def get_pb_line(self, lexeme:str=None, addr:int=None) -> int:
         symbol = self._get_symbol(lexeme=lexeme, addr=addr)
