@@ -161,7 +161,8 @@ class CodeGenerator:
         self.program_block.append(self.code('JP', f'@{return_address}'))        
         
     def pop_func_address(self) -> None:
-        self._semantic_stack.pop() # pop func addr
+        addr = self._semantic_stack.pop() # pop func addr
+        self._symbol_table.kill_block(addr)
         
     def func_call_start(self) -> None:
         func_name = self._symbol_table.find_lexeme(self._semantic_stack[-1]) 
@@ -235,7 +236,7 @@ class CodeGenerator:
     def get_status(self):
         return {
                 'semantic_stack': self._semantic_stack,
-                'program_block': self.program_block[-10:],
+                'program_block': self.program_block[-30:],
                 'func_stack': self._func_stack.shadow_stack,
                 }
         

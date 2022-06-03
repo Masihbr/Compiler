@@ -149,7 +149,8 @@ class Parser:
         if self._param_counter.seen_def and self._param_counter.seen_par and self._current_token[1] == ')':
             self._param_counter = ParamCounter()
         if self._current_token[0] == TokenType.ID:            
-            symbol = self._symbol_table.add_symbol(lexeme=self._current_token[1], line=self.lineno)
+            symbol = self._symbol_table.add_symbol(lexeme=self._current_token[1], line=self.lineno, 
+                                                   category='param' if self._param_counter.seen_par else 'var')
             if self._param_counter.seen_def and not self._param_counter.seen_par:
                 self._param_counter.symbol = symbol
                 symbol.category = 'func'
