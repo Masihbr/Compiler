@@ -16,6 +16,7 @@ class CodeGenerator:
         self._first_func_seen = True # set to false after seeing the first function other than main
         self._output_func_active = False 
         self._break_stack = deque() # save breaks then fill them
+        self._step = 4
         self._generator = {
             '#pid': self.pid,
             '#pnum': self.pnum,
@@ -45,6 +46,10 @@ class CodeGenerator:
             '#while': self._while,
             '#break': self._break,
             '#pop': self.pop,
+            '#arr_init': self.arr_init,
+            '#parr': self.parr,
+            '#arr_len': self.arr_len,
+            '#index': self.index,
         }
     
     @property
@@ -90,11 +95,11 @@ class CodeGenerator:
     def pfunc(self, lexeme:str) -> None:
         self._symbol_table.set_category(lexeme=lexeme, category='func')
         self.pid(lexeme=lexeme)
-    
+        
     def assign(self) -> None:
-        lhs = self._semantic_stack.pop()
         rhs = self._semantic_stack.pop()
-        self.program_block.append(self.code('ASSIGN', lhs, rhs))
+        lhs = self._semantic_stack.pop()
+        self.program_block.append(self.code('ASSIGN', rhs, lhs))
 
     def label(self) -> None:
         self._semantic_stack.append(self.pb_len)
@@ -238,10 +243,39 @@ class CodeGenerator:
             self.program_block[break_address] = self.code('JP', jump_out_address)
         self._break_count = 0
             
-    
     def _break(self):
         self._break_stack.append(self.pb_len)
         self.program_block.append(self.code('JP', '?'))
+    
+    def arr_init(self):
+        temp = self._temp_manager.get_temp()
+        self.program_block.append(self.code('ASSIGN', f'#{self._temp_manager.arr_temp}', temp))
+        self._semantic_stack.append(temp)
+        self._semantic_stack.append(self._temp_manager.arr_temp)
+    
+    def parr(self):
+        expr = self._semantic_stack.pop()
+        temp = self._temp_manager.get_arr_temp()
+        self.program_block.append(self.code('ASSIGN', expr, temp))
+    
+    def arr_len(self):
+        arr_len = (self._temp_manager.arr_temp - self._semantic_stack.pop()) // self._step
+        arr_addr = self._semantic_stack[-2] # lhs of assign - semantic_stack[-1] contains arr start address
+        self._symbol_table.set_args_cells(addr=arr_addr, count=arr_len)
+    
+    def index(self):
+        arr_index = self._semantic_stack.pop()
+        arr_addr = self._semantic_stack.pop()
+
+        self._semantic_stack.append(arr_index)
+        self._semantic_stack.append(f'#{self._step}')
+        self.mult()
+
+        self._semantic_stack.append(arr_addr)
+        self.add()
+        
+        indexed_addr = self._semantic_stack.pop()
+        self._semantic_stack.append(f'@{indexed_addr}')
     
     def get_program_block(self) -> str:
         return self._program_block.str_program_block()
@@ -249,7 +283,7 @@ class CodeGenerator:
     def get_status(self):
         return {
                 'semantic_stack': self._semantic_stack,
-                'program_block': self.program_block[-30:],
+                # 'program_block': self.program_block[-30:],
                 'func_stack': self._func_stack.shadow_stack,
                 }
         

@@ -104,6 +104,10 @@ class SymbolTable:
         symbol = self._get_symbol(lexeme=lexeme, addr=addr)
         symbol.category = category if symbol else None
     
+    def set_args_cells(self, lexeme:str=None, addr:int=None, count:int=0):
+        symbol = self._get_symbol(lexeme=lexeme, addr=addr)
+        symbol.args_cells = count if symbol else None
+    
     def get_pb_line(self, lexeme:str=None, addr:int=None) -> int:
         symbol = self._get_symbol(lexeme=lexeme, addr=addr)
         return symbol.pb_line if symbol else None

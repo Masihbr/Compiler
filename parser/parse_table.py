@@ -58,18 +58,18 @@ PARSE_TABLE = {
     'B': {
         ';': SYNCHRONOUS,
         '=': ('=', 'C', '#assign'), # = C #assign
-        '[': ('[', 'Expression', ']', '=', 'C', '#assign'), # B -> [ Expression ] = C #assign
+        '[': ('[', 'Expression', '#index', ']', '=', 'C', '#assign'), # B -> [ Expression #index ] = C #assign
         '(': ('#func_call_start', '(', 'Arguments', ')', '#func_call_finish', '#pop'), # B -> #func_call_start ( Arguments ) #func_call_finish #pop
     },
     'C': {
         ';': SYNCHRONOUS,
         'ID': ('Expression',),
-        '[': ('[', 'Expression', 'List_Rest', ']'),
+        '[': ('#arr_init', '[', 'Expression', '#parr', 'List_Rest', ']', '#arr_len'),  # C -> #arr_init [ Expression #parr List_Rest ] #arr_len
         'NUM': ('Expression',),
     },
     'List_Rest': {
         ']': EPSILON,
-        ',': (',', 'Expression', 'List_Rest'),
+        ',': (',', 'Expression', '#parr', 'List_Rest'), # List_Rest -> , Expression #parr List_Rest
     },
     'Return_stmt': {
         ';': SYNCHRONOUS,
@@ -199,7 +199,7 @@ PARSE_TABLE = {
     },
     'Primary': {
         ';': EPSILON,
-        '[': ('[', 'Expression', ']', 'Primary'),
+        '[': ('[', 'Expression', '#index', ']', 'Primary'), # Primary -> [ Expression #index ] Primary
         ']': EPSILON,
         '(': ('#func_call_start', '(', 'Arguments', ')', '#func_call_finish', 'Primary'), # Primary -> #func_call_start ( Arguments ) #func_call_finish Primary
         ')': EPSILON,

@@ -13,11 +13,11 @@ Compound_stmt -> If_stmt
 Compound_stmt -> Iteration_stmt
 Assignment_Call -> #pid ID B
 B -> = C #assign
-B -> [ Expression ] = C #assign
+B -> [ Expression #index ] = C #assign
 B -> #func_call_start ( Arguments ) #func_call_finish #pop
 C -> Expression
-C -> [ Expression List_Rest ]
-List_Rest -> , Expression List_Rest
+C -> #arr_init [ Expression #parr List_Rest ] #arr_len
+List_Rest -> , Expression #parr List_Rest
 List_Rest -> ''
 Return_stmt -> return Return_Value #func_def_finish
 Return_Value -> Expression 
@@ -45,7 +45,7 @@ Term_Prime -> ''
 Factor -> Atom Power
 Power -> ** Factor
 Power -> Primary
-Primary -> [ Expression ] Primary
+Primary -> [ Expression #index ] Primary
 Primary -> #func_call_start ( Arguments ) #func_call_finish Primary
 Primary -> ''
 Arguments -> Expression #add_arg Arguments_Prime
@@ -54,14 +54,3 @@ Arguments_Prime -> , Expression #add_arg Arguments_Prime
 Arguments_Prime -> ''
 Atom -> #pid ID
 Atom -> #pnum NUM
-#save -> ''
-#save_jpf -> ''
-#jpf -> ''
-#jp -> ''
-#pid -> ''
-#pnum -> ''
-#assign -> ''
-#func_call_finish -> ''
-#set_func_start -> ''
-#save_func -> ''
-#func_def_finish -> ''
