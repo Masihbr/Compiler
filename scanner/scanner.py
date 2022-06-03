@@ -90,7 +90,7 @@ class Scanner:
 
         write_all(filename="tokens", string=self.tokens_to_string(self.tokens))
         write_all(filename="lexical_errors", string=self.errors_to_string(self.errors))
-        write_all(filename="symbol_table", string=self.symbols_to_string(self.symbols))
+        write_all(filename="symbol_table_old", string=self.symbols_to_string(self.symbols))
 
         return TokenType.EOF, '$'
 
@@ -160,11 +160,14 @@ class Scanner:
             if char == '*':
                 self.state = 9
             else:
+                self.lineno += int(char == '\n')
                 self.state = 8
         # /* comment */ state
         elif self.state == 9:
             if char == '/':
                 self.state = 10
+            elif char == '*':
+                self.state = 9
             else:
                 self.state = 8
         # #comment state
