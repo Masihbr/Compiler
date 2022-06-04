@@ -50,6 +50,7 @@ class CodeGenerator:
             '#parr': self.parr,
             '#arr_len': self.arr_len,
             '#index': self.index,
+            '#replace': self.replace,
         }
     
     @property
@@ -69,7 +70,7 @@ class CodeGenerator:
     
     def generate(self, action_symbol: str, input: str) -> None:
         try:
-            if action_symbol in {'#pid', '#pnum', '#pparam', '#pfunc', '#comp_op'}:  # set of actions which need input for operation
+            if action_symbol in {'#pid', '#pnum', '#pparam', '#pfunc', '#comp_op', '#replace'}:  # set of actions which need input for operation
                 self._generator[action_symbol](input)
             else:
                 self._generator[action_symbol]()
@@ -150,6 +151,7 @@ class CodeGenerator:
             return
     
     def save_func(self) -> None:
+        self._symbol_table.scope_push()
         func_address = self._semantic_stack.pop()
         if  self._symbol_table.find_lexeme(func_address) != 'main' \
             and self._first_func_seen: # don't save main - don't save after first function
@@ -179,6 +181,7 @@ class CodeGenerator:
         self.program_block.append(self.code('JP', f'@{return_address}'))        
         
     def pop_func_address(self) -> None:
+        self._symbol_table.scope_pop()
         addr = self._semantic_stack.pop() # pop func addr
         self._symbol_table.kill_block(addr)
         
@@ -276,6 +279,10 @@ class CodeGenerator:
         
         indexed_addr = self._semantic_stack.pop()
         self._semantic_stack.append(f'@{indexed_addr}')
+    
+    def replace(self, lexeme:str=''):
+        self._semantic_stack.pop()
+        self._semantic_stack.append(self._symbol_table.find_addr(lexeme=lexeme))
     
     def get_program_block(self) -> str:
         return self._program_block.str_program_block()

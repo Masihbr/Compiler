@@ -53,7 +53,7 @@ PARSE_TABLE = {
     },
     'Assignment_Call': {
         ';': SYNCHRONOUS,
-        'ID': ('#pid', 'ID', 'B'), # Assignment_Call -> #pid ID B
+        'ID': ('#pid', 'ID', 'B'), # Assignment_Call -> #pid ID #var_def_finish B
     },
     'B': {
         ';': SYNCHRONOUS,

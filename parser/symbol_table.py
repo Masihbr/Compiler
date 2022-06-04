@@ -1,8 +1,10 @@
+from collections import deque
+from pprint import pprint
 from typing import Iterator
 
 
 class Symbol:
-    def __init__(self, lexeme:str='', address:int=0, category:str='var', _type:str='', line:int=0) -> None:
+    def __init__(self, lexeme:str='', address:int=0, category:str='var', _type:str='', line:int=0, scope:int=0) -> None:
         self._lexeme = lexeme
         self._address = address
         self._category = category # {func, var, param}
@@ -10,6 +12,7 @@ class Symbol:
         self._type = _type
         self._line = line
         self._pb_line = 0
+        self._scope = scope
         self._alive = True
     
     @property 
@@ -36,6 +39,10 @@ class Symbol:
     def alive(self):
         return self._alive
     
+    @property
+    def scope(self):
+        return self._scope
+    
     @pb_line.setter
     def pb_line(self, val):
         self._pb_line = val
@@ -51,15 +58,20 @@ class Symbol:
     @alive.setter
     def alive(self,val):
         self._alive = val
-        
+    
+    @scope.setter
+    def scope(self,val):
+        self._scope = val
+         
     def __str__(self) -> str:
-        return f'{self._lexeme:<10} {self._address:<10} {self._pb_line:<10} {self._category:<10} {self._args_cells:<10} {self._type:<10} {self._line:<10} {self._alive:<10}'
+        return f'{self._lexeme:<10} {self._address:<10} {self._pb_line:<10} {self._category:<10} {self._args_cells:<10} {self._type:<10} {self._line:<10} {self._alive:<10} {self._scope:<10}'
 
 class SymbolTable:
     def __init__(self, start_address:int=100, step:int=4) -> None:
         self._current_address = start_address
         self._step = step
         self._symbols = list()
+        self._scope_stack = deque()
     
     @property
     def alive_symbols(self) -> Iterator:
@@ -87,9 +99,10 @@ class SymbolTable:
         self._current_address += self._step
         return addr
     
-    def add_symbol(self, lexeme:str='', _type:str='', line:int=0, category:str='var') -> Symbol:
-        if not self.find_addr(lexeme):
-            symbol = Symbol(lexeme, self.get_address(), _type=_type, line=line, category=category)
+    def add_symbol(self, lexeme:str='', _type:str='', line:int=0, category:str='var', is_def:bool=False) -> Symbol:
+        symbol = self._get_symbol(lexeme)
+        if not symbol or (symbol.scope != len(self._scope_stack) and is_def):
+            symbol = Symbol(lexeme, self.get_address(), _type=_type, line=line, category=category, scope=len(self._scope_stack))
             self._symbols.append(symbol)
             return symbol
     
@@ -130,8 +143,15 @@ class SymbolTable:
                 break
             symbol.alive = False
     
+    def scope_push(self):
+        self._scope_stack.append(len(self._symbols) - 1)
+    
+    def scope_pop(self):
+        self._scope_stack.pop()
+    
     def __str__(self) -> str:
-        res = f'{"":<4}{"lexeme":<10} {"address":<10} {"PB_line":<10} {"category":<10} {"args_cells":<10} {"type":<10} {"line":<10} {"alive":<10}\n'
+        res = f'{"":<4}{"lexeme":<10} {"address":<10} {"PB_line":<10} {"category":<10}' + \
+              f' {"args_cells":<10} {"type":<10} {"line":<10} {"alive":<10} {"scope":<10}\n'
         count = 0
         for symbol in self._symbols:
             res += f'{count:<3} {str(symbol)}' + '\n'

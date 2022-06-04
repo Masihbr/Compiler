@@ -18,6 +18,7 @@ class Parser:
         self._root = Node('Program')
         self._tree = deque([Node('$', parent=self._root), self._root])
         self._current_token = None
+        self._declaration_lexeme = ''
         self._errors = defaultdict(list)
 
     @property
@@ -52,9 +53,9 @@ class Parser:
 
     def codegen(self) -> None:
         action_symbol = self._stack.pop()
-        print(self.lineno, action_symbol)
-        pprint(self._code.get_status())
-        print(f'{"--":-^48}')
+        # print(self.lineno, action_symbol)
+        # pprint(self._code.get_status())
+        # print(f'{"--":-^48}')
         self._code.generate(action_symbol=action_symbol, input=self.lexeme)
     
     def codeparse(self) -> bool:
@@ -136,7 +137,11 @@ class Parser:
     def advance_input(self):
         self._current_token = self._scanner.get_next_token()
         if self._current_token[0] == TokenType.ID:            
-            self._symbol_table.add_symbol(lexeme=self._current_token[1], line=self.lineno)
+            self._declaration_lexeme = self._current_token[1]
+            self._symbol_table.add_symbol(lexeme=self._declaration_lexeme, line=self.lineno)
+        elif self._current_token[1] == '=':
+            if self._symbol_table.add_symbol(lexeme=self._declaration_lexeme, line=self.lineno, is_def=True):
+                self._code.generate('#replace', input=self._declaration_lexeme)
         if self._current_token[0] in [TokenType.WHITESPACE, TokenType.COMMENT]:
             self.advance_input()
 
