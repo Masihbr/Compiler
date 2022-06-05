@@ -98,7 +98,7 @@ class Parser:
         self.advance_input()
         _continue = True
         while self._stack and _continue:
-            if self._stack[-1].startswith('#'):
+            if self._stack[-1].startswith('#'): # TODO comments which start with #
                 self.codegen()
             else:
                 _continue = self.codeparse()
