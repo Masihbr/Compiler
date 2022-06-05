@@ -66,9 +66,6 @@ class CodeGenerator:
     def code(self):
         return self._program_block.code
 
-    def pop(self) -> None:
-        self._semantic_stack.pop()
-
     def generate(self, action_symbol: str, input: str) -> None:
         try:
             if action_symbol in {'#pid', '#pnum', '#pparam', '#pfunc', '#comp_op',
@@ -78,6 +75,9 @@ class CodeGenerator:
                 self._generator[action_symbol]()
         except KeyError:
             warnings.warn(f'Sorry {action_symbol} not implemented yet.')
+
+    def pop(self) -> None:
+        self._semantic_stack.pop()
 
     def pid(self, lexeme) -> None:
         addr = self._symbol_table.find_addr(lexeme)

@@ -37,21 +37,30 @@ class Parser:
     def lexeme(self):
         return self._current_token[1]
 
-    def pop_stacks(self):
-        self._stack.pop()
-        self._tree.pop()
+    def parse(self):
+        self.advance_input()
+        _continue = True
+        while self._stack and _continue:
+            if self._stack[-1].startswith('#'):  # TODO comments which start with #
+                self.codegen()
+            else:
+                _continue = self.codeparse()
 
-    @staticmethod
-    def remove_node(node):
-        parent = node.parent
-        children = list(parent.children)
-        children.remove(node)
-        parent.children = children
+        write_all(filename='symbol_table', string=str(self._symbol_table))
+        write_all(filename='parse_tree', string=str(RenderTree(self._root, childiter=reversed).by_attr()))
+        write_all(filename='syntax_errors', string=self.errors_to_string())
+        write_all(filename='output', string=self._code.get_program_block())
 
-    def clear_tree(self):
-        while len(self._tree) > 0:
-            self.remove_node(self._tree[-1])
-            self._tree.pop()
+    def advance_input(self):
+        self._current_token = self._scanner.get_next_token()
+        if self._current_token[0] == TokenType.ID:
+            self._declaration_lexeme = self._current_token[1]
+            self._symbol_table.add_symbol(lexeme=self._declaration_lexeme, line=self.lineno)
+        elif self._current_token[1] == '=':
+            if self._symbol_table.add_symbol(lexeme=self._declaration_lexeme, line=self.lineno, is_def=True):
+                self._code.generate('#replace', input=self._declaration_lexeme)
+        if self._current_token[0] in [TokenType.WHITESPACE, TokenType.COMMENT]:
+            self.advance_input()
 
     def codegen(self) -> None:
         action_symbol = self._stack.pop()
@@ -94,19 +103,9 @@ class Parser:
                 self.advance_input()
         return True
 
-    def parse(self):
-        self.advance_input()
-        _continue = True
-        while self._stack and _continue:
-            if self._stack[-1].startswith('#'): # TODO comments which start with #
-                self.codegen()
-            else:
-                _continue = self.codeparse()
-
-        write_all(filename='symbol_table', string=str(self._symbol_table))
-        write_all(filename='parse_tree', string=str(RenderTree(self._root, childiter=reversed).by_attr()))
-        write_all(filename='syntax_errors', string=self.errors_to_string())
-        write_all(filename='output', string=self._code.get_program_block())
+    def pop_stacks(self):
+        self._stack.pop()
+        self._tree.pop()
 
     def handle_non_terminal(self, tree_top, grammar):
         grammar_reversed = grammar[::-1]
@@ -136,16 +135,17 @@ class Parser:
         self.remove_node(self._tree[-1])
         self.pop_stacks()
 
-    def advance_input(self):
-        self._current_token = self._scanner.get_next_token()
-        if self._current_token[0] == TokenType.ID:
-            self._declaration_lexeme = self._current_token[1]
-            self._symbol_table.add_symbol(lexeme=self._declaration_lexeme, line=self.lineno)
-        elif self._current_token[1] == '=':
-            if self._symbol_table.add_symbol(lexeme=self._declaration_lexeme, line=self.lineno, is_def=True):
-                self._code.generate('#replace', input=self._declaration_lexeme)
-        if self._current_token[0] in [TokenType.WHITESPACE, TokenType.COMMENT]:
-            self.advance_input()
+    @staticmethod
+    def remove_node(node):
+        parent = node.parent
+        children = list(parent.children)
+        children.remove(node)
+        parent.children = children
+
+    def clear_tree(self):
+        while len(self._tree) > 0:
+            self.remove_node(self._tree[-1])
+            self._tree.pop()
 
     def errors_to_string(self):
         if len(self._errors) == 0:
