@@ -1,12 +1,13 @@
 from collections import deque, defaultdict
-from pprint import pprint
-from tokenize import Token
+
+from anytree import Node, RenderTree
+
 from codegen.codegen import CodeGenerator
 from parser.parse_table import PARSE_TABLE, SYNCHRONOUS
 from parser.symbol_table import SymbolTable
-from utils.file_handler import write_all
 from scanner.scanner import Scanner, TokenType
-from anytree import Node, RenderTree
+from utils.file_handler import write_all
+
 
 class Parser:
     def __init__(self):
@@ -57,41 +58,41 @@ class Parser:
         # pprint(self._code.get_status())
         # print(f'{"--":-^48}')
         self._code.generate(action_symbol=action_symbol, input=self.lexeme)
-    
+
     def codeparse(self) -> bool:
         stack_top = self._stack[-1]
         tree_top = self._tree[-1]
         if stack_top in self._parse_table.keys():
-            if self.terminal not in self._parse_table[stack_top].keys(): # empty (1)
+            if self.terminal not in self._parse_table[stack_top].keys():  # empty (1)
                 if self.terminal == TokenType.EOF.value and stack_top != TokenType.EOF.value:
                     self.handle_unexpected_eof()
                     return False
                 self.handle_empty()
                 return True
-            
+
             grammar = self._parse_table[stack_top][self.terminal]
             self.pop_stacks()
-            
-            if grammar and len(grammar) > 1 and not grammar[0]: # (EPSILON, #action) situations
+
+            if grammar and len(grammar) > 1 and not grammar[0]:  # (EPSILON, #action) situations
                 Node('epsilon', parent=tree_top)
                 grammar = tuple(filter(lambda x: x, grammar))
-            
+
             if grammar == SYNCHRONOUS:  # synch (2)
                 self.handle_synch(stack_top, tree_top)
             elif not grammar:
                 Node('epsilon', parent=tree_top)
-            else: # Non-Terminal match
+            else:  # Non-Terminal match
                 self.handle_non_terminal(tree_top, grammar)
         else:
             if stack_top != self.terminal:  # mismatch (3)
                 self.handle_mismatch()
-            else: # Terminal match
+            else:  # Terminal match
                 tree_top.name = '$' if self._current_token[1] == TokenType.EOF.value else \
                     f'({self._current_token[0].value}, {self._current_token[1]})'
                 self.pop_stacks()
                 self.advance_input()
-        return True    
-        
+        return True
+
     def parse(self):
         self.advance_input()
         _continue = True
@@ -99,8 +100,8 @@ class Parser:
             if self._stack[-1].startswith('#'):
                 self.codegen()
             else:
-                _continue = self.codeparse()                
-        
+                _continue = self.codeparse()
+
         write_all(filename='symbol_table', string=str(self._symbol_table))
         write_all(filename='parse_tree', string=str(RenderTree(self._root, childiter=reversed).by_attr()))
         write_all(filename='syntax_errors', string=self.errors_to_string())
@@ -136,7 +137,7 @@ class Parser:
 
     def advance_input(self):
         self._current_token = self._scanner.get_next_token()
-        if self._current_token[0] == TokenType.ID:            
+        if self._current_token[0] == TokenType.ID:
             self._declaration_lexeme = self._current_token[1]
             self._symbol_table.add_symbol(lexeme=self._declaration_lexeme, line=self.lineno)
         elif self._current_token[1] == '=':

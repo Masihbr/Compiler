@@ -3,7 +3,7 @@ SYNCHRONOUS = 'synch'
 
 PARSE_TABLE = {
     'Program': {
-        'break': ('Statements', '#jump_main'), # Program -> Statements #jump_main
+        'break': ('Statements', '#jump_main'),  # Program -> Statements #jump_main
         'continue': ('Statements', '#jump_main'),
         'ID': ('Statements', '#jump_main'),
         'return': ('Statements', '#jump_main'),
@@ -39,7 +39,7 @@ PARSE_TABLE = {
     },
     'Simple_stmt': {
         ';': SYNCHRONOUS,
-        'break': ('break', '#break'), # Simple_stmt -> break #break
+        'break': ('break', '#break'),  # Simple_stmt -> break #break
         'continue': ('continue',),
         'ID': ('Assignment_Call',),
         'return': ('Return_stmt',),
@@ -47,36 +47,38 @@ PARSE_TABLE = {
     },
     'Compound_stmt': {
         ';': SYNCHRONOUS,
-        'def': ('Function_def',), # Compound_stmt -> Function_def
+        'def': ('Function_def',),  # Compound_stmt -> Function_def
         'if': ('If_stmt',),
         'while': ('Iteration_stmt',),
     },
     'Assignment_Call': {
         ';': SYNCHRONOUS,
-        'ID': ('#pid', 'ID', 'B'), # Assignment_Call -> #pid ID #var_def_finish B
+        'ID': ('#pid', 'ID', 'B'),  # Assignment_Call -> #pid ID #var_def_finish B
     },
     'B': {
         ';': SYNCHRONOUS,
-        '=': ('=', 'C', '#assign'), # = C #assign
-        '[': ('[', 'Expression', '#index', ']', '=', 'C', '#assign'), # B -> [ Expression #index ] = C #assign
-        '(': ('#func_call_start', '(', 'Arguments', ')', '#func_call_finish', '#pop'), # B -> #func_call_start ( Arguments ) #func_call_finish #pop
+        '=': ('=', 'C', '#assign'),  # = C #assign
+        '[': ('[', 'Expression', '#index', ']', '=', 'C', '#assign'),  # B -> [ Expression #index ] = C #assign
+        '(': ('#func_call_start', '(', 'Arguments', ')', '#func_call_finish', '#pop'),
+        # B -> #func_call_start ( Arguments ) #func_call_finish #pop
     },
     'C': {
         ';': SYNCHRONOUS,
         'ID': ('Expression',),
-        '[': ('#arr_init', '[', 'Expression', '#parr', 'List_Rest', ']', '#arr_len'),  # C -> #arr_init [ Expression #parr List_Rest ] #arr_len
+        '[': ('#arr_init', '[', 'Expression', '#parr', 'List_Rest', ']', '#arr_len'),
+        # C -> #arr_init [ Expression #parr List_Rest ] #arr_len
         'NUM': ('Expression',),
     },
     'List_Rest': {
         ']': EPSILON,
-        ',': (',', 'Expression', '#parr', 'List_Rest'), # List_Rest -> , Expression #parr List_Rest
+        ',': (',', 'Expression', '#parr', 'List_Rest'),  # List_Rest -> , Expression #parr List_Rest
     },
     'Return_stmt': {
         ';': SYNCHRONOUS,
-        'return': ('return', 'Return_Value', '#func_def_finish'), # Return_stmt -> return Return_Value #func_def_finish
+        'return': ('return', 'Return_Value', '#func_def_finish'),  # Return_stmt -> return Return_Value #func_def_finish
     },
     'Return_Value': {
-        ';': (EPSILON, '#push_zero'), # Return_Value -> '' #push_zero
+        ';': (EPSILON, '#push_zero'),  # Return_Value -> '' #push_zero
         'ID': ('Expression',),
         'NUM': ('Expression',),
     },
@@ -86,34 +88,39 @@ PARSE_TABLE = {
     },
     'Function_def': {
         ';': SYNCHRONOUS,
-        'def': ('def', '#pfunc', 'ID', '#save_func', '#set_func_start', '(', 'Params', ')', '#func_def_start', ':', 'Statements', '#push_zero', '#func_def_finish', '#pop_func_address'), 
+        'def': ('def', '#pfunc', 'ID', '#save_func', '#set_func_start', '(', 'Params', ')', '#func_def_start', ':',
+                'Statements', '#push_zero', '#func_def_finish', '#pop_func_address'),
         # Function_def -> def #pfunc ID #save_func #set_func_start ( Params ) #func_def_start : Statements #push_zero #func_def_finish #pop_func_address
     },
     'Params': {
-        'ID': ('#pparam', 'ID', 'Params_Prime'), # Params -> #pparam ID Params_Prime
+        'ID': ('#pparam', 'ID', 'Params_Prime'),  # Params -> #pparam ID Params_Prime
         ')': EPSILON,
     },
     'Params_Prime': {
         ')': EPSILON,
-        ',': (',', '#pparam', 'ID', 'Params_Prime'), # Params -> #pparam ID Params_Prime
+        ',': (',', '#pparam', 'ID', 'Params_Prime'),  # Params -> #pparam ID Params_Prime
     },
     'If_stmt': {
         ';': SYNCHRONOUS,
-        'if': ('if', 'Relational_Expression', '#save', ':', 'Statements', 'Else_block'), # If_stmt -> if Relational_Expression #save : Statements Else_block
+        'if': ('if', 'Relational_Expression', '#save', ':', 'Statements', 'Else_block'),
+        # If_stmt -> if Relational_Expression #save : Statements Else_block
     },
     'Else_block': {
-        ';': (EPSILON, '#jpf'), # Else_block -> '' #jpf
-        'else': ('else', ':', '#jpf_save', 'Statements', '#jp'), # Else_block -> else : #jpf_save Statements #jp
+        ';': (EPSILON, '#jpf'),  # Else_block -> '' #jpf
+        'else': ('else', ':', '#jpf_save', 'Statements', '#jp'),  # Else_block -> else : #jpf_save Statements #jp
     },
     'Iteration_stmt': {
         ';': SYNCHRONOUS,
-        'while': ('while', '#label', '(', 'Relational_Expression', ')', '#save', 'Statements', '#while'), # Iteration_stmt -> while #label ( Relational_Expression ) #save Statements #while
+        'while': ('while', '#label', '(', 'Relational_Expression', ')', '#save', 'Statements', '#while'),
+        # Iteration_stmt -> while #label ( Relational_Expression ) #save Statements #while
     },
     'Relational_Expression': {
-        'ID': ('Expression', '#comp_op', 'Relop', 'Expression', '#comp'), # Relational_Expression -> Expression #comp_op Relop Expression #comp
+        'ID': ('Expression', '#comp_op', 'Relop', 'Expression', '#comp'),
+        # Relational_Expression -> Expression #comp_op Relop Expression #comp
         ')': SYNCHRONOUS,
         ':': SYNCHRONOUS,
-        'NUM': ('Expression', '#comp_op', 'Relop', 'Expression', '#comp'), # Relational_Expression -> Expression #comp_op Relop Expression #comp
+        'NUM': ('Expression', '#comp_op', 'Relop', 'Expression', '#comp'),
+        # Relational_Expression -> Expression #comp_op Relop Expression #comp
     },
     'Relop': {
         'ID': SYNCHRONOUS,
@@ -140,8 +147,8 @@ PARSE_TABLE = {
         ':': EPSILON,
         '==': EPSILON,
         '<': EPSILON,
-        '+': ('+', 'Term', '#add', 'Expression_Prime'), # Expression_Prime -> + Term #add Expression_Prime
-        '-': ('-', 'Term', '#sub', 'Expression_Prime'), # Expression_Prime -> + Term #sub Expression_Prime
+        '+': ('+', 'Term', '#add', 'Expression_Prime'),  # Expression_Prime -> + Term #add Expression_Prime
+        '-': ('-', 'Term', '#sub', 'Expression_Prime'),  # Expression_Prime -> + Term #sub Expression_Prime
     },
     'Term': {
         ';': SYNCHRONOUS,
@@ -166,7 +173,7 @@ PARSE_TABLE = {
         '<': EPSILON,
         '+': EPSILON,
         '-': EPSILON,
-        '*': ('*', 'Factor', '#mult', 'Term_Prime'), # Term_Prime -> * Factor #mult Term_Prime
+        '*': ('*', 'Factor', '#mult', 'Term_Prime'),  # Term_Prime -> * Factor #mult Term_Prime
     },
     'Factor': {
         ';': SYNCHRONOUS,
@@ -190,7 +197,7 @@ PARSE_TABLE = {
         ')': ('Primary',),
         ',': ('Primary',),
         ':': ('Primary',),
-        '==':('Primary',),
+        '==': ('Primary',),
         '<': ('Primary',),
         '+': ('Primary',),
         '-': ('Primary',),
@@ -199,9 +206,10 @@ PARSE_TABLE = {
     },
     'Primary': {
         ';': EPSILON,
-        '[': ('[', 'Expression', '#index', ']', 'Primary'), # Primary -> [ Expression #index ] Primary
+        '[': ('[', 'Expression', '#index', ']', 'Primary'),  # Primary -> [ Expression #index ] Primary
         ']': EPSILON,
-        '(': ('#func_call_start', '(', 'Arguments', ')', '#func_call_finish', 'Primary'), # Primary -> #func_call_start ( Arguments ) #func_call_finish Primary
+        '(': ('#func_call_start', '(', 'Arguments', ')', '#func_call_finish', 'Primary'),
+        # Primary -> #func_call_start ( Arguments ) #func_call_finish Primary
         ')': EPSILON,
         ',': EPSILON,
         ':': EPSILON,
@@ -212,17 +220,18 @@ PARSE_TABLE = {
         '*': EPSILON,
     },
     'Arguments': {
-        'ID': ('Expression', '#add_arg', 'Arguments_Prime'), # Arguments -> Expression #add_arg Arguments_Prime
+        'ID': ('Expression', '#add_arg', 'Arguments_Prime'),  # Arguments -> Expression #add_arg Arguments_Prime
         ')': EPSILON,
-        'NUM': ('Expression', '#add_arg', 'Arguments_Prime'), # Arguments -> Expression #add_arg Arguments_Prime
+        'NUM': ('Expression', '#add_arg', 'Arguments_Prime'),  # Arguments -> Expression #add_arg Arguments_Prime
     },
     'Arguments_Prime': {
         ')': EPSILON,
-        ',': (',', 'Expression', '#add_arg', 'Arguments_Prime'), # Arguments_Prime -> , Expression #add_arg Arguments_Prime
+        ',': (',', 'Expression', '#add_arg', 'Arguments_Prime'),
+        # Arguments_Prime -> , Expression #add_arg Arguments_Prime
     },
     'Atom': {
         ';': SYNCHRONOUS,
-        'ID': ('#pid', 'ID'), # Atom -> #pid ID
+        'ID': ('#pid', 'ID'),  # Atom -> #pid ID
         '[': SYNCHRONOUS,
         ']': SYNCHRONOUS,
         '(': SYNCHRONOUS,
@@ -235,6 +244,6 @@ PARSE_TABLE = {
         '-': SYNCHRONOUS,
         '*': SYNCHRONOUS,
         '**': SYNCHRONOUS,
-        'NUM': ('#pnum','NUM'), # Atom -> #pnum NUM
+        'NUM': ('#pnum', 'NUM'),  # Atom -> #pnum NUM
     },
 }

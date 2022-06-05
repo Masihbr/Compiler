@@ -2,10 +2,10 @@ class ProgramBlock:
     THREE_OPERAND = {'ADD', 'MULT', 'SUB', 'EQ', 'LT'}
     TWO_OPERAND = {'ASSIGN', 'JPF'}
     ONE_OPERAND = {'PRINT', 'JP'}
-    
+
     def __init__(self) -> None:
         self.codes = list()
-    
+
     def code(self, action: str = '', *args) -> str:
         args_len = len(args)
         if action == '':
@@ -21,7 +21,7 @@ class ProgramBlock:
         else:
             raise Exception(
                 f'Number of inputs {args_len} does not match action {action}')
-    
+
     def str_program_block(self) -> str:
         line = 0
         res = ''
@@ -29,4 +29,3 @@ class ProgramBlock:
             res += f'{line}\t{code}\n'
             line += 1
         return res
-    

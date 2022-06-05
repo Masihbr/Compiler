@@ -1,10 +1,18 @@
 from collections import deque
+
 from codegen.program_block import ProgramBlock
 from codegen.temp_manager import TempManager
 
 
 class Stack:
-    def __init__(self, program_block: ProgramBlock, temp_manager: TempManager, sp: int = 500, point: int = 8000, step: int = 4) -> None:
+    def __init__(
+            self,
+            program_block: ProgramBlock,
+            temp_manager: TempManager,
+            sp: int = 500,
+            point: int = 8000,
+            step: int = 4
+    ) -> None:
         self._program_block = program_block
         self._temp_manager = temp_manager
         self._sp = sp
@@ -25,10 +33,10 @@ class Stack:
     def code(self):
         return self._program_block.code
 
-    @property 
+    @property
     def is_empty(self):
         return self._sp == self._start
-        
+
     def push(self, value) -> None:
         self.shadow_stack.append(value)
         self.program_block.append(self.code('ASSIGN', value, f'@{self._sp}'))
@@ -47,7 +55,7 @@ class Stack:
         while not self.is_empty():
             res.append(self.pop())
         return res
-    
+
     def access(self, offset: int) -> int:
         temp1, temp2 = self._temp_manager.get_temp(), self._temp_manager.get_temp()
         self.program_block.append(self.code('SUB', self._sp, f'#{offset * self._step}', temp1))

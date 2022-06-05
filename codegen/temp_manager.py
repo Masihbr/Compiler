@@ -1,5 +1,5 @@
 class TempManager:
-    def __init__(self, start_address:int=1500, step:int=4):
+    def __init__(self, start_address: int = 1500, step: int = 4):
         self.var_temp = start_address
         self.arr_temp = start_address * 2
         self._step = step
