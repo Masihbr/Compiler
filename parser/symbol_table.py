@@ -12,66 +12,19 @@ class Symbol:
             line: int = 0,
             scope: int = 0
     ) -> None:
-        self._lexeme = lexeme
-        self._address = address
-        self._category = category  # {func, var, param}
-        self._args_cells = 0
-        self._type = _type
-        self._line = line
-        self._pb_line = 0
-        self._scope = scope
-        self._alive = True
-
-    @property
-    def lexeme(self):
-        return self._lexeme
-
-    @property
-    def address(self):
-        return self._address
-
-    @property
-    def category(self):
-        return self._category
-
-    @property
-    def args_cells(self):
-        return self._args_cells
-
-    @property
-    def pb_line(self):
-        return self._pb_line
-
-    @property
-    def alive(self):
-        return self._alive
-
-    @property
-    def scope(self):
-        return self._scope
-
-    @pb_line.setter
-    def pb_line(self, val):
-        self._pb_line = val
-
-    @args_cells.setter
-    def args_cells(self, val):
-        self._args_cells = val
-
-    @category.setter
-    def category(self, val):
-        self._category = val
-
-    @alive.setter
-    def alive(self, val):
-        self._alive = val
-
-    @scope.setter
-    def scope(self, val):
-        self._scope = val
+        self.lexeme = lexeme
+        self.address = address
+        self.category = category  # {func, var, param}
+        self.args_cells = 0
+        self.type = _type
+        self.line = line
+        self.pb_line = 0
+        self.scope = scope
+        self.alive = True
 
     def __str__(self) -> str:
-        return f'{self._lexeme:<10} {self._address:<10} {self._pb_line:<10} {self._category:<10} {self._args_cells:<10} {self._type:<10} {self._line:<10} {self._alive:<10} {self._scope:<10}'
+        return f'{self.lexeme:<10} {self.address:<10} {self.pb_line:<10} {self.category:<10} ' \
+               f'{self.args_cells:<10} {self.type:<10} {self.line:<10} {self.alive:<10} {self.scope:<10}'
 
 
 class SymbolTable:
