@@ -202,7 +202,7 @@ PARSE_TABLE = {
         '+': ('Primary',),
         '-': ('Primary',),
         '*': ('Primary',),
-        '**': ('**', 'Factor'),
+        '**': ('**', 'Factor', '#power'),  # Power -> ** Factor #power
     },
     'Primary': {
         ';': EPSILON,

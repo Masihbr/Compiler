@@ -43,7 +43,7 @@ Term -> Factor Term_Prime
 Term_Prime -> * Factor #mult Term_Prime
 Term_Prime -> ''
 Factor -> Atom Power
-Power -> ** Factor
+Power -> ** Factor #power
 Power -> Primary
 Primary -> [ Expression #index ] Primary
 Primary -> #func_call_start ( Arguments ) #func_call_finish Primary

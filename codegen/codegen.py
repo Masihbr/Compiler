@@ -44,6 +44,7 @@ class CodeGenerator:
             '#add': self.add,
             '#sub': self.sub,
             '#mult': self.mult,
+            '#power': self.power,
             '#while': self._while,
             '#break': self._break,
             '#pop': self.pop,
@@ -229,6 +230,24 @@ class CodeGenerator:
 
     def mult(self):
         self.arith('MULT')
+
+    # TODO: x ** y doesn't work when y < 1
+    def power(self):
+        temp1 = self._temp_manager.get_temp()
+        temp2 = self._temp_manager.get_temp()
+        temp3 = self._temp_manager.get_temp()
+        r_op = self._semantic_stack.pop()
+        l_op = self._semantic_stack.pop()
+
+        self.program_block.append(self.code('ASSIGN', l_op, temp1))
+        self.program_block.append(self.code('ASSIGN', r_op, temp2))
+        start = self.pb_len
+        self.program_block.append(self.code('MULT', temp1, l_op, temp1))
+        self.program_block.append(self.code('SUB', temp2, '#1', temp2))
+        self.program_block.append(self.code('LT', temp2, '#2', temp3))
+        self.program_block.append(self.code('JPF', temp3, start))
+
+        self._semantic_stack.append(temp1)
 
     def arith(self, action: str = 'ADD'):
         temp = self._temp_manager.get_temp()
