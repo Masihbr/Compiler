@@ -52,7 +52,7 @@ class Stack:
 
     def pop_all(self) -> list:
         res = []
-        while not self.is_empty():
+        while not self.is_empty:
             res.append(self.pop())
         return res
 

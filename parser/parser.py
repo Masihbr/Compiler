@@ -41,7 +41,8 @@ class Parser:
         self._stack.pop()
         self._tree.pop()
 
-    def remove_node(self, node):
+    @staticmethod
+    def remove_node(node):
         parent = node.parent
         children = list(parent.children)
         children.remove(node)
