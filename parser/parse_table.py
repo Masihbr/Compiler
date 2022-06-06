@@ -40,7 +40,7 @@ PARSE_TABLE = {
     'Simple_stmt': {
         ';': SYNCHRONOUS,
         'break': ('break', '#break'),  # Simple_stmt -> break #break
-        'continue': ('continue',),
+        'continue': ('continue', '#continue'),  # Simple_stmt -> continue #continue
         'ID': ('Assignment_Call',),
         'return': ('Return_stmt',),
         'global': ('Global_stmt',),

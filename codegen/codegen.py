@@ -47,6 +47,7 @@ class CodeGenerator:
             '#power': self.power,
             '#while': self._while,
             '#break': self._break,
+            '#continue': self._continue,
             '#pop': self.pop,
             '#arr_init': self.arr_init,
             '#parr': self.parr,
@@ -271,6 +272,10 @@ class CodeGenerator:
     def _break(self):
         self._break_stack.append(self.pb_len)
         self.program_block.append(self.code('JP', '?'))
+
+    def _continue(self):
+        while_address = self._semantic_stack[-3]
+        self.program_block.append(self.code('JP', while_address))
 
     def arr_init(self):
         temp = self._temp_manager.get_temp()

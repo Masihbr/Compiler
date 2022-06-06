@@ -7,7 +7,7 @@ Simple_stmt -> Assignment_Call
 Simple_stmt -> Return_stmt
 Simple_stmt -> Global_stmt
 Simple_stmt -> break #break
-Simple_stmt -> continue
+Simple_stmt -> continue #continue
 Compound_stmt -> Function_def
 Compound_stmt -> If_stmt
 Compound_stmt -> Iteration_stmt
