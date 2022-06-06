@@ -21,6 +21,7 @@ class Parser:
         self._current_token = None
         self._declaration_lexeme = ''
         self._errors = defaultdict(list)
+        self._next = False
 
     @property
     def lineno(self):
@@ -56,11 +57,13 @@ class Parser:
         if self._current_token[0] == TokenType.ID:
             self._declaration_lexeme = self._current_token[1]
             self._symbol_table.add_symbol(lexeme=self._declaration_lexeme, line=self.lineno)
+            self._next = True
         elif self._current_token[1] == '=':
-            if self._symbol_table.add_symbol(lexeme=self._declaration_lexeme, line=self.lineno, is_def=True):
+            if self._next and self._symbol_table.add_symbol(lexeme=self._declaration_lexeme, line=self.lineno, is_def=True):
                 self._code.generate('#replace', input=self._declaration_lexeme)
         if self._current_token[0] in [TokenType.WHITESPACE, TokenType.COMMENT]:
             self.advance_input()
+        self._next = False
 
     def codegen(self) -> None:
         action_symbol = self._stack.pop()
