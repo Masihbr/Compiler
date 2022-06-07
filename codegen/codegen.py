@@ -17,6 +17,7 @@ class CodeGenerator:
         self._first_func_seen = True  # set to false after seeing the first function other than main
         self._output_func_active = False
         self._break_stack = deque()  # save breaks then fill them
+        self._while_address = None  # continue
         self._step = 4
         self._generator = {
             '#pid': self.pid,
@@ -107,6 +108,7 @@ class CodeGenerator:
         self.program_block.append(self.code('ASSIGN', rhs, lhs))
 
     def label(self) -> None:
+        self._while_address = self.pb_len
         self._semantic_stack.append(self.pb_len)
 
     def save(self) -> None:
@@ -274,8 +276,7 @@ class CodeGenerator:
         self.program_block.append(self.code('JP', '?'))
 
     def _continue(self):
-        while_address = self._semantic_stack[-3]
-        self.program_block.append(self.code('JP', while_address))
+        self.program_block.append(self.code('JP', self._while_address))
 
     def arr_init(self):
         temp = self._temp_manager.get_temp()
