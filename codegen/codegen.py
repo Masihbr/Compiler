@@ -16,8 +16,7 @@ class CodeGenerator:
         self._symbol_table = symbol_table
         self._first_func_seen = True  # set to false after seeing the first function other than main
         self._output_func_active = False
-        self._break_stack = deque()  # save breaks then fill them
-        self._while_address = None  # continue
+        self._while_stack = deque()  # stack of tuples: [(while address, list of breaks),...]
         self._step = 4
         self._generator = {
             '#pid': self.pid,
@@ -108,8 +107,7 @@ class CodeGenerator:
         self.program_block.append(self.code('ASSIGN', rhs, lhs))
 
     def label(self) -> None:
-        self._while_address = self.pb_len
-        self._semantic_stack.append(self.pb_len)
+        self._while_stack.append((self.pb_len, []))
 
     def save(self) -> None:
         self._semantic_stack.append(self.pb_len)
@@ -258,10 +256,11 @@ class CodeGenerator:
         self._semantic_stack.append(temp)
 
     def _while(self):
-        breaks = [self._break_stack.pop() for _ in range(len(self._break_stack))]
+        while_info = self._while_stack.pop()
+        while_address = while_info[0]
+        breaks = while_info[1]
         pb_address = self._semantic_stack.pop()
         jump_condition = self._semantic_stack.pop()
-        while_address = self._semantic_stack.pop()
         jump_out_address = self.pb_len + 1
         self.program_block[pb_address] = self.code('JPF', jump_condition, jump_out_address)
         self.program_block.append(self.code('JP', while_address))
@@ -270,11 +269,12 @@ class CodeGenerator:
         self._break_count = 0
 
     def _break(self):
-        self._break_stack.append(self.pb_len)
+        self._while_stack[-1][1].append(self.pb_len)
         self.program_block.append(self.code('JP', '?'))
 
     def _continue(self):
-        self.program_block.append(self.code('JP', self._while_address))
+        while_address = self._while_stack[-1][0]
+        self.program_block.append(self.code('JP', while_address))
 
     def arr_init(self):
         temp = self._temp_manager.get_temp()
