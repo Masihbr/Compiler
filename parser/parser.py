@@ -51,6 +51,7 @@ class Parser:
         write_all(filename='parse_tree', string=str(RenderTree(self._root, childiter=reversed).by_attr()))
         write_all(filename='syntax_errors', string=self.errors_to_string())
         write_all(filename='output', string=self._code.get_program_block())
+        write_all(filename='semantic_errors', string=self._code.get_semantic_errors())
 
     def advance_input(self):
         self._current_token = self._scanner.get_next_token()
@@ -59,11 +60,11 @@ class Parser:
 
     def codegen(self) -> None:
         action_symbol = self._stack.pop()
-        print(self.lineno, action_symbol)
-        pprint(self._code.get_status())
-        print(f'{"--":-^48}')
-        self._code.generate(action_symbol=action_symbol, input=self.lexeme)
+        # print(self.lineno, action_symbol)
+        # pprint(self._code.get_status())
+        # print(f'{"--":-^48}')
         self._code.lineno = self.lineno # not clean
+        self._code.generate(action_symbol=action_symbol, input=self.lexeme)
 
     def codeparse(self) -> bool:
         stack_top = self._stack[-1]

@@ -2,6 +2,7 @@ import warnings
 from collections import deque
 
 from codegen.program_block import ProgramBlock
+from codegen.semantic_error import SemanticError, SemanticErrorHandler
 from codegen.stack import Stack
 from codegen.temp_manager import TempManager
 from parser.symbol_table import SymbolTable
@@ -27,6 +28,7 @@ class CodeGenerator:
         self._step = 4
         self.lineno = 0
         self.globals = set()
+        self.error_handler = SemanticErrorHandler()
         self._generator = {
             '#pid': self.pid,
             '#pnum': self.pnum,
@@ -99,7 +101,8 @@ class CodeGenerator:
         if addr:
             self._semantic_stack.append(addr)
         else:
-            raise Exception(f'Address of {lexeme} not found.')
+            self.error_handler.add(SemanticError.ID_NOT_DEFINED, self.lineno, id=lexeme)
+            self._semantic_stack.append(-1) # push dummy invalid address in stack 
 
     def psym(self, lexeme) -> None:
         addr = self._symbol_table.find_addr(lexeme)
@@ -234,7 +237,7 @@ class CodeGenerator:
 
     def func_call_start(self) -> None:
         func_name = self._symbol_table.find_lexeme(self._semantic_stack[-1])
-        if func_name == 'output':
+        if not func_name or func_name == 'output':
             self._output_func_active = True
 
     def add_arg(self) -> None:
@@ -311,10 +314,16 @@ class CodeGenerator:
         self._break_count = 0
 
     def _break(self) -> None:
+        if len(self._while_stack) == 0:
+            self.error_handler.add(SemanticError.BREAK_MISSING_WHILE, self.lineno)
+            return 
         self._while_stack[-1][1].append(self.pb_len)
         self.program_block.append(self.code('JP', '?'))
 
     def _continue(self) -> None:
+        if len(self._while_stack) == 0:
+            self.error_handler.add(SemanticError.BREAK_MISSING_WHILE, self.lineno)
+            return
         while_address = self._while_stack[-1][0]
         self.program_block.append(self.code('JP', while_address))
 
@@ -356,8 +365,14 @@ class CodeGenerator:
         self.globals.add(lexeme)
     
     def get_program_block(self) -> str:
-        return self._program_block.str_program_block()
+        if len(self.error_handler.semantic_errors) == 0:
+            return self._program_block.str_program_block()
+        else:
+            return 'The output code has not been generated.'
 
+    def get_semantic_errors(self) -> str:
+        return self.error_handler.get_errors_str()
+    
     def get_status(self):
         return {
             'semantic_stack': self._semantic_stack,
