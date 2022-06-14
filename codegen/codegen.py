@@ -26,6 +26,7 @@ class CodeGenerator:
         self._lexeme_status = LexemeStatus('', False, False)
         self._step = 4
         self.lineno = 0
+        self.globals = set()
         self._generator = {
             '#pid': self.pid,
             '#pnum': self.pnum,
@@ -65,6 +66,7 @@ class CodeGenerator:
             '#arr_len': self.arr_len,
             '#index': self.index,
             '#replace': self.replace,
+            '#global': self._global,
         }
 
     @property
@@ -82,7 +84,7 @@ class CodeGenerator:
     def generate(self, action_symbol: str, input: str) -> None:
         try:
             if action_symbol in {'#pid', '#pnum', '#pparam', '#pfunc', '#comp_op',
-                                 '#replace', '#psym'}:  # set of actions which need input for operation
+                                 '#replace', '#psym', '#global'}:  # set of actions which need input for operation
                 self._generator[action_symbol](input)
             else:
                 self._generator[action_symbol]()
@@ -115,11 +117,12 @@ class CodeGenerator:
             return
         elif not self._lexeme_status.is_found:
             symbol = self._symbol_table.add_symbol(lexeme=self._lexeme_status.lexeme, line=self.lineno)
-        elif not self._lexeme_status.is_same_scope:
+            self._semantic_stack.append(symbol.address)
+        elif not self._lexeme_status.is_same_scope and self._lexeme_status.lexeme not in self.globals:
             symbol = self._symbol_table.add_symbol(lexeme=self._lexeme_status.lexeme, line=self.lineno, force=True)
             self._semantic_stack.pop()
+            self._semantic_stack.append(symbol.address)
         self._lexeme_status = LexemeStatus()    
-        self._semantic_stack.append(symbol.address)
     
     def check_sym(self) -> None:
         if not self._lexeme_status.is_found:
@@ -227,6 +230,7 @@ class CodeGenerator:
         self._symbol_table.scope_pop()
         addr = self._semantic_stack.pop()  # pop func addr
         self._symbol_table.kill_block(addr)
+        self.globals = set() # empty global set
 
     def func_call_start(self) -> None:
         func_name = self._symbol_table.find_lexeme(self._semantic_stack[-1])
@@ -261,16 +265,16 @@ class CodeGenerator:
         for _ in range(args_count):
             self._func_stack.pop()
 
-    def add(self):
+    def add(self) -> None:
         self.arith('ADD')
 
-    def sub(self):
+    def sub(self) -> None:
         self.arith('SUB')
 
-    def mult(self):
+    def mult(self) -> None:
         self.arith('MULT')
 
-    def power(self):
+    def power(self) -> None:
         temp1 = self._temp_manager.get_temp()
         temp2 = self._temp_manager.get_temp()
         r_op = self._semantic_stack.pop()
@@ -286,14 +290,14 @@ class CodeGenerator:
 
         self._semantic_stack.append(temp1)
 
-    def arith(self, action: str = 'ADD'):
+    def arith(self, action: str = 'ADD') -> None:
         temp = self._temp_manager.get_temp()
         lhs = self._semantic_stack.pop()
         rhs = self._semantic_stack.pop()
         self.program_block.append(self.code(action, rhs, lhs, temp))
         self._semantic_stack.append(temp)
 
-    def _while(self):
+    def _while(self) -> None:
         while_info = self._while_stack.pop()
         while_address = while_info[0]
         breaks = while_info[1]
@@ -306,31 +310,31 @@ class CodeGenerator:
             self.program_block[break_address] = self.code('JP', jump_out_address)
         self._break_count = 0
 
-    def _break(self):
+    def _break(self) -> None:
         self._while_stack[-1][1].append(self.pb_len)
         self.program_block.append(self.code('JP', '?'))
 
-    def _continue(self):
+    def _continue(self) -> None:
         while_address = self._while_stack[-1][0]
         self.program_block.append(self.code('JP', while_address))
 
-    def arr_init(self):
+    def arr_init(self) -> None:
         temp = self._temp_manager.get_temp()
         self.program_block.append(self.code('ASSIGN', f'#{self._temp_manager.arr_temp}', temp))
         self._semantic_stack.append(temp)
         self._semantic_stack.append(self._temp_manager.arr_temp)
 
-    def parr(self):
+    def parr(self) -> None:
         expr = self._semantic_stack.pop()
         temp = self._temp_manager.get_arr_temp()
         self.program_block.append(self.code('ASSIGN', expr, temp))
 
-    def arr_len(self):
+    def arr_len(self) -> None:
         arr_len = (self._temp_manager.arr_temp - self._semantic_stack.pop()) // self._step
         arr_addr = self._semantic_stack[-2]  # lhs of assign - semantic_stack[-1] contains arr start address
         self._symbol_table.set_args_cells(addr=arr_addr, count=arr_len)
 
-    def index(self):
+    def index(self) -> None:
         arr_index = self._semantic_stack.pop()
         arr_addr = self._semantic_stack.pop()
 
@@ -344,10 +348,13 @@ class CodeGenerator:
         indexed_addr = self._semantic_stack.pop()
         self._semantic_stack.append(f'@{indexed_addr}')
 
-    def replace(self, lexeme: str = ''):
+    def replace(self, lexeme: str = '') -> None:
         self._semantic_stack.pop()
         self._semantic_stack.append(self._symbol_table.find_addr(lexeme=lexeme))
 
+    def _global(self, lexeme: str = '') -> None:
+        self.globals.add(lexeme)
+    
     def get_program_block(self) -> str:
         return self._program_block.str_program_block()
 

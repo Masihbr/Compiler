@@ -70,7 +70,6 @@ class SymbolTable:
 
     def add_symbol(self, lexeme: str = '', _type: str = '', line: int = 0, category: str = 'var', force: bool = False) -> Symbol:
         symbol = self._get_symbol(lexeme)
-        print('hey', symbol) 
         if force or not symbol:
             symbol = Symbol(lexeme, self.get_address(), _type=_type, line=line, category=category,
                             scope=len(self._scope_stack))

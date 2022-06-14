@@ -84,7 +84,7 @@ PARSE_TABLE = {
     },
     'Global_stmt': {
         ';': SYNCHRONOUS,
-        'global': ('global', 'ID'),
+        'global': ('global', '#global', 'ID'), # Global_stmt -> global #global ID
     },
     'Function_def': {
         ';': SYNCHRONOUS,
