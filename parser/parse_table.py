@@ -53,14 +53,14 @@ PARSE_TABLE = {
     },
     'Assignment_Call': {
         ';': SYNCHRONOUS,
-        'ID': ('#pid', 'ID', 'B'),  # Assignment_Call -> #pid ID #var_def_finish B
+        'ID': ('#psym', 'ID', 'B'),  # Assignment_Call -> #psym ID #var_def_finish B
     },
     'B': {
         ';': SYNCHRONOUS,
-        '=': ('=', 'C', '#assign'),  # = C #assign
-        '[': ('[', 'Expression', '#index', ']', '=', 'C', '#assign'),  # B -> [ Expression #index ] = C #assign
-        '(': ('#func_call_start', '(', 'Arguments', ')', '#func_call_finish', '#pop'),
-        # B -> #func_call_start ( Arguments ) #func_call_finish #pop
+        '=': ('#add_sym', '=', 'C', '#assign'),  # B -> #add_sym = C #assign
+        '[': ('#check_sym', '[', 'Expression', '#index', ']', '=', 'C', '#assign'),  # B -> #check_sym [ Expression #index ] = C #assign
+        '(': ('#check_sym', '#func_call_start', '(', 'Arguments', ')', '#func_call_finish', '#pop'),
+        # B -> #check_sym #func_call_start ( Arguments ) #func_call_finish #pop
     },
     'C': {
         ';': SYNCHRONOUS,

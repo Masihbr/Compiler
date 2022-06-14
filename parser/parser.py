@@ -1,4 +1,5 @@
 from collections import deque, defaultdict
+from pprint import pprint
 
 from anytree import Node, RenderTree
 
@@ -19,9 +20,8 @@ class Parser:
         self._root = Node('Program')
         self._tree = deque([Node('$', parent=self._root), self._root])
         self._current_token = None
-        self._declaration_lexeme = ''
         self._errors = defaultdict(list)
-        self._next = False
+        
 
     @property
     def lineno(self):
@@ -54,24 +54,16 @@ class Parser:
 
     def advance_input(self):
         self._current_token = self._scanner.get_next_token()
-        if self._current_token[0] == TokenType.ID:
-            self._declaration_lexeme = self._current_token[1]
-            self._symbol_table.add_symbol(lexeme=self._declaration_lexeme, line=self.lineno)
-            self._next = True
-        elif self._current_token[1] == '=' and self._next:
-            if self._symbol_table.add_symbol(lexeme=self._declaration_lexeme, line=self.lineno, is_def=True):
-                self._code.generate('#replace', input=self._declaration_lexeme)
         if self._current_token[0] in [TokenType.WHITESPACE, TokenType.COMMENT]:
             self.advance_input()
-        if self._current_token[1] != self._declaration_lexeme:
-            self._next = False
 
     def codegen(self) -> None:
         action_symbol = self._stack.pop()
-        # print(self.lineno, action_symbol)
-        # pprint(self._code.get_status())
-        # print(f'{"--":-^48}')
+        print(self.lineno, action_symbol)
+        pprint(self._code.get_status())
+        print(f'{"--":-^48}')
         self._code.generate(action_symbol=action_symbol, input=self.lexeme)
+        self._code.lineno = self.lineno # not clean
 
     def codeparse(self) -> bool:
         stack_top = self._stack[-1]

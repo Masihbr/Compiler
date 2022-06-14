@@ -33,7 +33,11 @@ class SymbolTable:
         self._step = step
         self._symbols = list()
         self._scope_stack = deque()
+        self.def_output()
 
+    def def_output(self):
+        self.add_symbol(lexeme='output', category='func', line=0)
+    
     @property
     def alive_symbols(self) -> Iterator:
         return filter(lambda s: s.alive, reversed(self._symbols))
@@ -55,15 +59,19 @@ class SymbolTable:
         symbol = self._get_symbol(addr=addr)
         return symbol.lexeme if symbol else None
 
+    def is_symbol_current_scope(self, addr: int = 0, lexeme: str = '') -> int:
+        symbol = self._get_symbol(addr=addr, lexeme=lexeme)
+        return symbol.scope == len(self._scope_stack) if symbol else None
+
     def get_address(self) -> int:
         addr = self._current_address
         self._current_address += self._step
         return addr
 
-    def add_symbol(self, lexeme: str = '', _type: str = '', line: int = 0, category: str = 'var',
-                   is_def: bool = False) -> Symbol:
+    def add_symbol(self, lexeme: str = '', _type: str = '', line: int = 0, category: str = 'var', force: bool = False) -> Symbol:
         symbol = self._get_symbol(lexeme)
-        if not symbol or (symbol.scope != len(self._scope_stack) and is_def):
+        print('hey', symbol) 
+        if force or not symbol:
             symbol = Symbol(lexeme, self.get_address(), _type=_type, line=line, category=category,
                             scope=len(self._scope_stack))
             self._symbols.append(symbol)
@@ -71,10 +79,6 @@ class SymbolTable:
 
     def set_pb_line(self, line: int) -> None:
         self._symbols[-1].pb_line = line
-
-    def set_param(self, lexeme: str = None, addr: int = None):
-        self.set_category(lexeme=lexeme, addr=addr, category='param')
-        self.inc_args(self._get_symbol(category='func'))
 
     def set_category(self, lexeme: str = None, addr: int = None, category: str = 'var'):
         symbol = self._get_symbol(lexeme=lexeme, addr=addr)
@@ -88,9 +92,10 @@ class SymbolTable:
         symbol = self._get_symbol(lexeme=lexeme, addr=addr)
         return symbol.pb_line if symbol else None
 
-    @staticmethod
-    def inc_args(symbol):
+    def inc_args(self):
+        symbol = self._get_symbol(category='func')
         symbol.args_cells += 1
+        print(symbol.lexeme, symbol.args_cells)
 
     def get_func_args_count(self, lexeme: str = None, addr: str = None) -> int:
         if lexeme:

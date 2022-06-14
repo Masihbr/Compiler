@@ -5,7 +5,13 @@ from codegen.program_block import ProgramBlock
 from codegen.stack import Stack
 from codegen.temp_manager import TempManager
 from parser.symbol_table import SymbolTable
+from dataclasses import dataclass
 
+@dataclass
+class LexemeStatus:
+    lexeme: str = ''
+    is_same_scope: bool = False
+    is_found: bool = False
 
 class CodeGenerator:
     def __init__(self, symbol_table: SymbolTable = None) -> None:
@@ -17,12 +23,17 @@ class CodeGenerator:
         self._first_func_seen = True  # set to false after seeing the first function other than main
         self._output_func_active = False
         self._while_stack = deque()  # stack of tuples: [(while address, list of breaks),...]
+        self._lexeme_status = LexemeStatus('', False, False)
         self._step = 4
+        self.lineno = 0
         self._generator = {
             '#pid': self.pid,
             '#pnum': self.pnum,
             '#pparam': self.pparam,
             '#pfunc': self.pfunc,
+            '#psym': self.psym,
+            '#add_sym': self.add_sym,
+            '#check_sym': self.check_sym,
             '#assign': self.assign,
             '#label': self.label,
             '#save': self.save,
@@ -71,7 +82,7 @@ class CodeGenerator:
     def generate(self, action_symbol: str, input: str) -> None:
         try:
             if action_symbol in {'#pid', '#pnum', '#pparam', '#pfunc', '#comp_op',
-                                 '#replace'}:  # set of actions which need input for operation
+                                 '#replace', '#psym'}:  # set of actions which need input for operation
                 self._generator[action_symbol](input)
             else:
                 self._generator[action_symbol]()
@@ -88,17 +99,44 @@ class CodeGenerator:
         else:
             raise Exception(f'Address of {lexeme} not found.')
 
+    def psym(self, lexeme) -> None:
+        addr = self._symbol_table.find_addr(lexeme)
+        self._lexeme_status.lexeme = lexeme
+        if addr:
+            self._semantic_stack.append(addr)
+            self._lexeme_status.is_found = True
+            self._lexeme_status.is_same_scope = self._symbol_table.is_symbol_current_scope(addr=addr)
+        else:
+            self._lexeme_status.is_found, self._lexeme_status.is_same_scope = False, False            
+    
+    def add_sym(self) -> None:
+        if self._lexeme_status.is_found and self._lexeme_status.is_same_scope:
+            self._lexeme_status = LexemeStatus()
+            return
+        elif not self._lexeme_status.is_found:
+            symbol = self._symbol_table.add_symbol(lexeme=self._lexeme_status.lexeme, line=self.lineno)
+        elif not self._lexeme_status.is_same_scope:
+            symbol = self._symbol_table.add_symbol(lexeme=self._lexeme_status.lexeme, line=self.lineno, force=True)
+            self._semantic_stack.pop()
+        self._lexeme_status = LexemeStatus()    
+        self._semantic_stack.append(symbol.address)
+    
+    def check_sym(self) -> None:
+        if not self._lexeme_status.is_found:
+            pass # semantic error not found
+    
     def pnum(self, number) -> None:
         temp = self._temp_manager.get_temp()
         self.program_block.append(self.code('ASSIGN', f'#{number}', temp))
         self._semantic_stack.append(temp)
 
     def pparam(self, lexeme: str) -> None:
-        self._symbol_table.set_param(lexeme=lexeme)
+        self._symbol_table.add_symbol(lexeme=lexeme, category='param', line=self.lineno)
+        self._symbol_table.inc_args()
         self.pid(lexeme=lexeme)
 
     def pfunc(self, lexeme: str) -> None:
-        self._symbol_table.set_category(lexeme=lexeme, category='func')
+        self._symbol_table.add_symbol(lexeme=lexeme, category='func', line=self.lineno)
         self.pid(lexeme=lexeme)
 
     def assign(self) -> None:
