@@ -72,6 +72,7 @@ class CodeGenerator:
             '#replace': self.replace,
             '#global': self._global,
             '#has_return_value': self.has_return_value,
+            '#check_void': self.check_void,
         }
 
     @property
@@ -195,7 +196,6 @@ class CodeGenerator:
         action = self._semantic_stack.pop()
         lhs = self._semantic_stack.pop()
         if not lhs or not rhs:
-            self.error_handler.add(SemanticError.VOID_OPERAND, self.lineno)
             self._semantic_stack.append(-1) # push dummy invalid address in stack as result 
             return
         temp = self._temp_manager.get_temp()
@@ -318,7 +318,6 @@ class CodeGenerator:
         r_op = self._semantic_stack.pop()
         l_op = self._semantic_stack.pop()
         if not r_op or not l_op:
-            self.error_handler.add(SemanticError.VOID_OPERAND, self.lineno)
             self._semantic_stack.append(-1) # push dummy invalid address in stack as result 
             return
         
@@ -337,7 +336,6 @@ class CodeGenerator:
         lhs = self._semantic_stack.pop()
         rhs = self._semantic_stack.pop()
         if not lhs or not rhs:
-            self.error_handler.add(SemanticError.VOID_OPERAND, self.lineno)
             self._semantic_stack.append(-1) # push dummy invalid address in stack as result 
             return
         
@@ -408,6 +406,10 @@ class CodeGenerator:
     def _global(self, lexeme: str = '') -> None:
         self.globals.add(lexeme)
     
+    def check_void(self) -> None:
+        if not self._semantic_stack[-1]:
+            self.error_handler.add(SemanticError.VOID_OPERAND, self.lineno)
+        
     def get_program_block(self) -> str:
         if len(self.error_handler.semantic_errors) == 0:
             return self._program_block.str_program_block()

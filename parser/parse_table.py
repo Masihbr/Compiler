@@ -115,8 +115,8 @@ PARSE_TABLE = {
         # Iteration_stmt -> while #label ( Relational_Expression ) #save Statements #while
     },
     'Relational_Expression': {
-        'ID': ('Expression', '#comp_op', 'Relop', 'Expression', '#comp'),
-        # Relational_Expression -> Expression #comp_op Relop Expression #comp
+        'ID': ('Expression', '#check_void', '#comp_op', 'Relop', 'Expression', '#check_void', '#comp'),
+        # Relational_Expression -> Expression #check_void #comp_op Relop #check_void Expression #comp
         ')': SYNCHRONOUS,
         ':': SYNCHRONOUS,
         'NUM': ('Expression', '#comp_op', 'Relop', 'Expression', '#comp'),
@@ -147,8 +147,8 @@ PARSE_TABLE = {
         ':': EPSILON,
         '==': EPSILON,
         '<': EPSILON,
-        '+': ('+', 'Term', '#add', 'Expression_Prime'),  # Expression_Prime -> + Term #add Expression_Prime
-        '-': ('-', 'Term', '#sub', 'Expression_Prime'),  # Expression_Prime -> + Term #sub Expression_Prime
+        '+': ('+', '#check_void', 'Term', '#check_void', '#add', 'Expression_Prime'),  # Expression_Prime -> + #check_void Term #check_void #add Expression_Prime
+        '-': ('-', '#check_void', 'Term', '#check_void', '#sub', 'Expression_Prime'),  # Expression_Prime -> - #check_void Term #check_void #sub Expression_Prime
     },
     'Term': {
         ';': SYNCHRONOUS,
@@ -173,7 +173,7 @@ PARSE_TABLE = {
         '<': EPSILON,
         '+': EPSILON,
         '-': EPSILON,
-        '*': ('*', 'Factor', '#mult', 'Term_Prime'),  # Term_Prime -> * Factor #mult Term_Prime
+        '*': ('*', '#check_void', 'Factor', '#check_void', '#mult', 'Term_Prime'),  # Term_Prime -> * #check_void Factor #check_void #mult Term_Prime
     },
     'Factor': {
         ';': SYNCHRONOUS,
@@ -202,7 +202,7 @@ PARSE_TABLE = {
         '+': ('Primary',),
         '-': ('Primary',),
         '*': ('Primary',),
-        '**': ('**', 'Factor', '#power'),  # Power -> ** Factor #power
+        '**': ('**', '#check_void', 'Factor', '#check_void', '#power'),  # Power -> ** #check_void Factor #power
     },
     'Primary': {
         ';': EPSILON,

@@ -32,18 +32,18 @@ If_stmt -> if Relational_Expression #save : Statements Else_block
 Else_block -> else : #jpf_save Statements #jp
 Else_block -> '' #jpf
 Iteration_stmt -> while #label ( Relational_Expression ) #save Statements #while
-Relational_Expression -> Expression #comp_op Relop Expression #comp
+Relational_Expression -> Expression #check_void #comp_op Relop Expression #check_void #comp
 Relop -> ==
 Relop -> <
 Expression -> Term Expression_Prime
-Expression_Prime -> + Term #add Expression_Prime
-Expression_Prime -> - Term #sub Expression_Prime
+Expression_Prime -> + #check_void Term #check_void #add Expression_Prime
+Expression_Prime -> - #check_void Term #check_void #sub Expression_Prime
 Expression_Prime -> ''
 Term -> Factor Term_Prime
-Term_Prime -> * Factor #mult Term_Prime
+Term_Prime -> * #check_void Factor #check_void #mult Term_Prime
 Term_Prime -> ''
 Factor -> Atom Power
-Power -> ** Factor #power
+Power -> ** #check_void Factor #check_void #power
 Power -> Primary
 Primary -> [ Expression #index ] Primary
 Primary -> #func_call_start ( Arguments ) #func_call_finish Primary
