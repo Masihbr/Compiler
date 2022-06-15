@@ -29,6 +29,7 @@ class CodeGenerator:
         self.lineno = 0
         self.globals = set()
         self.error_handler = SemanticErrorHandler()
+        self._args_count = deque()
         self._generator = {
             '#pid': self.pid,
             '#pnum': self.pnum,
@@ -130,7 +131,8 @@ class CodeGenerator:
     
     def check_sym(self) -> None:
         if not self._lexeme_status.is_found:
-            pass # semantic error not found
+            self.error_handler.add(SemanticError.ID_NOT_DEFINED, self.lineno, id=self._lexeme_status.lexeme)
+            self._semantic_stack.append(-1) # push dummy address as func address
     
     def pnum(self, number) -> None:
         temp = self._temp_manager.get_temp()
@@ -246,14 +248,17 @@ class CodeGenerator:
         func_name = self._symbol_table.find_lexeme(self._semantic_stack[-1])
         if not func_name: # problematic
             self._unknown_func_active = True
+        self._args_count.append(0)
 
     def add_arg(self) -> None:
         if self._unknown_func_active:
             self._semantic_stack.pop()
             return
-                
+        
+        args_count = self._args_count.pop()
         arg = self._semantic_stack.pop()
         self._func_stack.push(arg)
+        self._args_count.append(args_count + 1)
 
     def func_call_finish(self) -> None:
         if self._unknown_func_active:
@@ -265,6 +270,12 @@ class CodeGenerator:
             return
         
         func_address = self._semantic_stack.pop()
+        args_count_given = self._args_count.pop()
+        args_count_func = self._symbol_table.get_func_args_count(addr=func_address)
+        if args_count_given != args_count_func:
+            self.error_handler.add(SemanticError.ARGS_MISMATCH, self.lineno, id=self._symbol_table.find_lexeme(func_address))
+            args_count_func = args_count_given
+            
         func_pb_line = self._symbol_table.get_pb_line(addr=func_address)
 
         current_pb_line = self.pb_len
@@ -273,9 +284,9 @@ class CodeGenerator:
         
         return_value = self._func_stack.pop() if self._symbol_table.get_has_return_value(addr=func_address) else None
         self._semantic_stack.append(return_value)
-        args_count = self._symbol_table.get_func_args_count(addr=func_address)
+        
         self._func_stack.pop()
-        for _ in range(args_count):
+        for _ in range(args_count_func):
             self._func_stack.pop()
 
     def add(self) -> None:
