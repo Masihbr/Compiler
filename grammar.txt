@@ -20,7 +20,7 @@ C -> #arr_init [ Expression #parr List_Rest ] #arr_len
 List_Rest -> , Expression #parr List_Rest
 List_Rest -> ''
 Return_stmt -> return Return_Value #func_def_finish
-Return_Value -> Expression 
+Return_Value -> Expression #has_return_value
 Return_Value -> '' #push_zero
 Global_stmt -> global #global ID
 Function_def -> def #pfunc ID #save_func #set_func_start ( Params ) #func_def_start : Statements #push_zero #func_def_finish #pop_func_address

@@ -22,7 +22,7 @@ class SemanticErrorHandler:
         self.semantic_errors = list()
         
     def add(self, error:int, lineno:int, id:str=''):
-        error_massage = f'#{lineno}: Semantic Error! '
+        error_massage = f'#{lineno} : Semantic Error! '
         if error == SemanticError.MAIN_MISSING:
             error_massage += f'main function not found.'
         if error == SemanticError.ID_NOT_DEFINED:
@@ -32,7 +32,7 @@ class SemanticErrorHandler:
         if error == SemanticError.BREAK_MISSING_WHILE:
             error_massage += f'No \'while\' found for \'break\'.'
         if error == SemanticError.CONTINUE_MISSING_WHILE:
-            error_massage += f'No \'continue\' found for \'break\'.'
+            error_massage += f'No \'while\' found for \'continue\'.'
         if error == SemanticError.VOID_OPERAND:
             error_massage += f'Void type in operands.'
         if error == SemanticError.OVERLOADING:

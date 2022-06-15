@@ -79,8 +79,8 @@ PARSE_TABLE = {
     },
     'Return_Value': {
         ';': (EPSILON, '#push_zero'),  # Return_Value -> '' #push_zero
-        'ID': ('Expression',),
-        'NUM': ('Expression',),
+        'ID': ('Expression', '#has_return_value'), # Return_Value -> Expression #has_return_value
+        'NUM': ('Expression', '#has_return_value'), # Return_Value -> Expression #has_return_value
     },
     'Global_stmt': {
         ';': SYNCHRONOUS,

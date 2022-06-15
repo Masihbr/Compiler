@@ -37,7 +37,7 @@ class Stack:
     def is_empty(self):
         return self._sp == self._start
 
-    def push(self, value) -> None:
+    def push(self, value:int) -> None:
         self.shadow_stack.append(value)
         self.program_block.append(self.code('ASSIGN', value, f'@{self._sp}'))
         self.program_block.append(self.code('ADD', self._sp, f'#{self._step}', self._sp))

@@ -22,7 +22,7 @@ class CodeGenerator:
         self._func_stack = Stack(self._program_block, self._temp_manager)
         self._symbol_table = symbol_table
         self._first_func_seen = True  # set to false after seeing the first function other than main
-        self._output_func_active = False
+        self._unknown_func_active = False
         self._while_stack = deque()  # stack of tuples: [(while address, list of breaks),...]
         self._lexeme_status = LexemeStatus('', False, False)
         self._step = 4
@@ -69,6 +69,7 @@ class CodeGenerator:
             '#index': self.index,
             '#replace': self.replace,
             '#global': self._global,
+            '#has_return_value': self.has_return_value,
         }
 
     @property
@@ -193,8 +194,11 @@ class CodeGenerator:
 
     def jump_main(self) -> None:
         try:  # if code only has the main function no need for jump
-            self.program_block[self._semantic_stack.pop()] = self.code('JP',
-                                                                       self._symbol_table.get_pb_line(lexeme='main'))
+            main_pb_line = self._symbol_table.get_pb_line(lexeme='main')
+            if not main_pb_line:
+                self.error_handler.add(SemanticError.MAIN_MISSING, self.lineno)
+                return
+            self.program_block[self._semantic_stack.pop()] = self.code('JP', main_pb_line)
         except IndexError:
             Warning('Only main function present.')
             return
@@ -217,7 +221,10 @@ class CodeGenerator:
             self.program_block.append(self.code('ASSIGN', temp, arg))
 
     def push_zero(self) -> None:
-        self._semantic_stack.append('#0')  # return value of func is 0 if no return expr
+        self._semantic_stack.append('#0')  # return value of func is void if no return expr
+
+    def has_return_value(self) -> None:
+        self._symbol_table.set_has_return_value()
 
     def func_def_finish(self) -> None:
         if self._symbol_table.find_lexeme(self._semantic_stack[-2]) == 'main':
@@ -237,31 +244,34 @@ class CodeGenerator:
 
     def func_call_start(self) -> None:
         func_name = self._symbol_table.find_lexeme(self._semantic_stack[-1])
-        if not func_name or func_name == 'output':
-            self._output_func_active = True
+        if not func_name: # problematic
+            self._unknown_func_active = True
 
     def add_arg(self) -> None:
-        if self._output_func_active:
+        if self._unknown_func_active:
+            self._semantic_stack.pop()
             return
-
+                
         arg = self._semantic_stack.pop()
         self._func_stack.push(arg)
 
     def func_call_finish(self) -> None:
-        if self._output_func_active:
-            out = self._semantic_stack.pop()
-            self.program_block.append(self.code('PRINT', out))
-            self._output_func_active = False
+        if self._unknown_func_active:
+            self._unknown_func_active = False
             return
-
+        elif self._symbol_table.find_lexeme(self._semantic_stack[-1]) == 'output':
+            out = self._func_stack.pop()
+            self.program_block.append(self.code('PRINT', out))
+            return
+        
         func_address = self._semantic_stack.pop()
         func_pb_line = self._symbol_table.get_pb_line(addr=func_address)
 
         current_pb_line = self.pb_len
         self._func_stack.push(f'#{current_pb_line + 3}')
         self.program_block.append(self.code('JP', func_pb_line))
-
-        return_value = self._func_stack.pop()
+        
+        return_value = self._func_stack.pop() if self._symbol_table.get_has_return_value(addr=func_address) else None
         self._semantic_stack.append(return_value)
         args_count = self._symbol_table.get_func_args_count(addr=func_address)
         self._func_stack.pop()
@@ -282,7 +292,11 @@ class CodeGenerator:
         temp2 = self._temp_manager.get_temp()
         r_op = self._semantic_stack.pop()
         l_op = self._semantic_stack.pop()
-
+        if not r_op or not l_op:
+            self.error_handler.add(SemanticError.VOID_OPERAND, self.lineno)
+            self._semantic_stack.append(-1) # push dummy invalid address in stack as result 
+            return
+        
         self.program_block.append(self.code('ASSIGN', '#1', temp1))
         self.program_block.append(self.code('ASSIGN', r_op, temp2))
         start = self.pb_len
@@ -297,6 +311,11 @@ class CodeGenerator:
         temp = self._temp_manager.get_temp()
         lhs = self._semantic_stack.pop()
         rhs = self._semantic_stack.pop()
+        if not lhs or not rhs:
+            self.error_handler.add(SemanticError.VOID_OPERAND, self.lineno)
+            self._semantic_stack.append(-1) # push dummy invalid address in stack as result 
+            return
+        
         self.program_block.append(self.code(action, rhs, lhs, temp))
         self._semantic_stack.append(temp)
 
@@ -322,7 +341,7 @@ class CodeGenerator:
 
     def _continue(self) -> None:
         if len(self._while_stack) == 0:
-            self.error_handler.add(SemanticError.BREAK_MISSING_WHILE, self.lineno)
+            self.error_handler.add(SemanticError.CONTINUE_MISSING_WHILE, self.lineno)
             return
         while_address = self._while_stack[-1][0]
         self.program_block.append(self.code('JP', while_address))

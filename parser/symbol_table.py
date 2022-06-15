@@ -10,7 +10,7 @@ class Symbol:
             category: str = 'var',
             _type: str = '',
             line: int = 0,
-            scope: int = 0
+            scope: int = 0,
     ) -> None:
         self.lexeme = lexeme
         self.address = address
@@ -21,10 +21,11 @@ class Symbol:
         self.pb_line = 0
         self.scope = scope
         self.alive = True
+        self.has_return_value = False # whether or not func returns a value 
 
     def __str__(self) -> str:
         return f'{self.lexeme:<10} {self.address:<10} {self.pb_line:<10} {self.category:<10} ' \
-               f'{self.args_cells:<10} {self.type:<10} {self.line:<10} {self.alive:<10} {self.scope:<10}'
+               f'{self.args_cells:<10} {self.type:<10} {self.line:<10} {self.alive:<10} {self.scope:<10} {self.has_return_value:<10}'
 
 
 class SymbolTable:
@@ -95,6 +96,14 @@ class SymbolTable:
         symbol = self._get_symbol(category='func')
         symbol.args_cells += 1
 
+    def set_has_return_value(self) -> None:
+        symbol = self._get_symbol(category='func')
+        symbol.has_return_value = True
+    
+    def get_has_return_value(self, addr:int) -> bool:
+        symbol = self._get_symbol(addr=addr)
+        return symbol.has_return_value if symbol else None
+    
     def get_func_args_count(self, lexeme: str = None, addr: str = None) -> int:
         if lexeme:
             symbol = self._get_symbol(lexeme=lexeme)
@@ -118,7 +127,7 @@ class SymbolTable:
 
     def __str__(self) -> str:
         res = f'{"":<4}{"lexeme":<10} {"address":<10} {"PB_line":<10} {"category":<10}' + \
-              f' {"args_cells":<10} {"type":<10} {"line":<10} {"alive":<10} {"scope":<10}\n'
+              f' {"args_cells":<10} {"type":<10} {"line":<10} {"alive":<10} {"scope":<10} {"return_val":<10}\n'
         count = 0
         for symbol in self._symbols:
             res += f'{count:<3} {str(symbol)}' + '\n'
