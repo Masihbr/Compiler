@@ -40,4 +40,5 @@ class SemanticErrorHandler:
         self.semantic_errors.append(error_massage)
         
     def get_errors_str(self) -> str:
+        self.semantic_errors.sort(key=lambda x: int(x[1:x.index(':')-1]))
         return '\n'.join(self.semantic_errors)

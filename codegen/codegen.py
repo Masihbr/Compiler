@@ -35,6 +35,7 @@ class CodeGenerator:
             '#pnum': self.pnum,
             '#pparam': self.pparam,
             '#pfunc': self.pfunc,
+            '#check_func': self.check_func,
             '#psym': self.psym,
             '#add_sym': self.add_sym,
             '#check_sym': self.check_sym,
@@ -145,9 +146,15 @@ class CodeGenerator:
         self.pid(lexeme=lexeme)
 
     def pfunc(self, lexeme: str) -> None:
-        self._symbol_table.add_symbol(lexeme=lexeme, category='func', line=self.lineno)
+        self._symbol_table.add_symbol(lexeme=lexeme, category='func', line=self.lineno, force=True)
         self.pid(lexeme=lexeme)
 
+    def check_func(self) -> None:
+        if not self._symbol_table.is_last_func_valid():
+            func = self._symbol_table.get_symbol(category='func')
+            self.error_handler.add(SemanticError.OVERLOADING, lineno=func.line, id=func.lexeme)
+            self._symbol_table.remove_last_func()
+    
     def assign(self) -> None:
         rhs = self._semantic_stack.pop()
         lhs = self._semantic_stack.pop()
@@ -187,6 +194,10 @@ class CodeGenerator:
         rhs = self._semantic_stack.pop()
         action = self._semantic_stack.pop()
         lhs = self._semantic_stack.pop()
+        if not lhs or not rhs:
+            self.error_handler.add(SemanticError.VOID_OPERAND, self.lineno)
+            self._semantic_stack.append(-1) # push dummy invalid address in stack as result 
+            return
         temp = self._temp_manager.get_temp()
         self.program_block.append(self.code(action, lhs, rhs, temp))
         self._semantic_stack.append(temp)
@@ -215,7 +226,7 @@ class CodeGenerator:
         self._semantic_stack.append(func_address)
 
     def func_def_start(self) -> None:
-        args_count = self._symbol_table.get_func_args_count()
+        args_count = self._symbol_table.get_func_args_count().pop()
         args_start = 2  # args start point in stack
         for offset in range(args_start, args_start + args_count):  #
             arg = self._semantic_stack.pop()
@@ -270,11 +281,14 @@ class CodeGenerator:
             return
         
         func_address = self._semantic_stack.pop()
+        func_lexeme = self._symbol_table.find_lexeme(func_address)
         args_count_given = self._args_count.pop()
-        args_count_func = self._symbol_table.get_func_args_count(addr=func_address)
-        if args_count_given != args_count_func:
-            self.error_handler.add(SemanticError.ARGS_MISMATCH, self.lineno, id=self._symbol_table.find_lexeme(func_address))
-            args_count_func = args_count_given
+        possible_args_count = self._symbol_table.get_func_args_count(lexeme=func_lexeme)
+
+        if args_count_given not in possible_args_count:
+            self.error_handler.add(SemanticError.ARGS_MISMATCH, self.lineno, id=func_lexeme)
+        else:
+            func_address = self._symbol_table.get_func_address(lexeme=func_lexeme, args_count=args_count_given)
             
         func_pb_line = self._symbol_table.get_pb_line(addr=func_address)
 
@@ -286,7 +300,7 @@ class CodeGenerator:
         self._semantic_stack.append(return_value)
         
         self._func_stack.pop()
-        for _ in range(args_count_func):
+        for _ in range(args_count_given):
             self._func_stack.pop()
 
     def add(self) -> None:

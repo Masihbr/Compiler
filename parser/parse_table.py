@@ -89,8 +89,8 @@ PARSE_TABLE = {
     'Function_def': {
         ';': SYNCHRONOUS,
         'def': ('def', '#pfunc', 'ID', '#save_func', '#set_func_start', '(', 'Params', ')', '#func_def_start', ':',
-                'Statements', '#push_zero', '#func_def_finish', '#pop_func_address'),
-        # Function_def -> def #pfunc ID #save_func #set_func_start ( Params ) #func_def_start : Statements #push_zero #func_def_finish #pop_func_address
+                'Statements', '#push_zero', '#func_def_finish', '#pop_func_address', '#check_func'),
+        # Function_def -> def #pfunc ID #save_func #set_func_start ( Params ) #func_def_start : Statements #push_zero #func_def_finish #pop_func_address #check_func
     },
     'Params': {
         'ID': ('#pparam', 'ID', 'Params_Prime'),  # Params -> #pparam ID Params_Prime

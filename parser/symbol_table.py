@@ -1,5 +1,6 @@
+from ast import arg
 from collections import deque
-from typing import Iterator
+from typing import Iterator, List
 
 
 class Symbol:
@@ -21,7 +22,7 @@ class Symbol:
         self.pb_line = 0
         self.scope = scope
         self.alive = True
-        self.has_return_value = False # whether or not func returns a value 
+        self.has_return_value = False  # whether or not func returns a value
 
     def __str__(self) -> str:
         return f'{self.lexeme:<10} {self.address:<10} {self.pb_line:<10} {self.category:<10} ' \
@@ -38,12 +39,12 @@ class SymbolTable:
 
     def def_output(self):
         self.add_symbol(lexeme='output', category='func', line=0)
-    
+
     @property
-    def alive_symbols(self) -> Iterator:
+    def alive_symbols(self) -> Iterator[Symbol]:
         return filter(lambda s: s.alive, reversed(self._symbols))
 
-    def _get_symbol(self, lexeme: str = None, addr: int = None, category: str = None) -> Symbol:
+    def get_symbol(self, lexeme: str = None, addr: int = None, category: str = None) -> Symbol:
         for symbol in self.alive_symbols:
             if symbol.lexeme == lexeme:
                 return symbol
@@ -53,15 +54,16 @@ class SymbolTable:
                 return symbol
 
     def find_addr(self, lexeme: str = '') -> int:
-        symbol = self._get_symbol(lexeme=lexeme)
+        print([x.lexeme for x in self.alive_symbols], [x.lexeme for x in self._symbols],sep='\n')
+        symbol = self.get_symbol(lexeme=lexeme)
         return symbol.address if symbol else None
 
     def find_lexeme(self, addr: int = 0) -> str:
-        symbol = self._get_symbol(addr=addr)
+        symbol = self.get_symbol(addr=addr)
         return symbol.lexeme if symbol else None
 
     def is_symbol_current_scope(self, addr: int = 0, lexeme: str = '') -> int:
-        symbol = self._get_symbol(addr=addr, lexeme=lexeme)
+        symbol = self.get_symbol(addr=addr, lexeme=lexeme)
         return symbol.scope == len(self._scope_stack) if symbol else None
 
     def get_address(self) -> int:
@@ -70,7 +72,7 @@ class SymbolTable:
         return addr
 
     def add_symbol(self, lexeme: str = '', _type: str = '', line: int = 0, category: str = 'var', force: bool = False) -> Symbol:
-        symbol = self._get_symbol(lexeme)
+        symbol = self.get_symbol(lexeme)
         if force or not symbol:
             symbol = Symbol(lexeme, self.get_address(), _type=_type, line=line, category=category,
                             scope=len(self._scope_stack))
@@ -81,37 +83,69 @@ class SymbolTable:
         self._symbols[-1].pb_line = line
 
     def set_category(self, lexeme: str = None, addr: int = None, category: str = 'var'):
-        symbol = self._get_symbol(lexeme=lexeme, addr=addr)
+        symbol = self.get_symbol(lexeme=lexeme, addr=addr)
         symbol.category = category if symbol else None
 
     def set_args_cells(self, lexeme: str = None, addr: int = None, count: int = 0):
-        symbol = self._get_symbol(lexeme=lexeme, addr=addr)
+        symbol = self.get_symbol(lexeme=lexeme, addr=addr)
         symbol.args_cells = count if symbol else None
 
     def get_pb_line(self, lexeme: str = None, addr: int = None) -> int:
-        symbol = self._get_symbol(lexeme=lexeme, addr=addr)
+        symbol = self.get_symbol(lexeme=lexeme, addr=addr)
         return symbol.pb_line if symbol else None
 
     def inc_args(self):
-        symbol = self._get_symbol(category='func')
+        symbol = self.get_symbol(category='func')
         symbol.args_cells += 1
 
     def set_has_return_value(self) -> None:
-        symbol = self._get_symbol(category='func')
+        symbol = self.get_symbol(category='func')
         symbol.has_return_value = True
-    
-    def get_has_return_value(self, addr:int) -> bool:
-        symbol = self._get_symbol(addr=addr)
+
+    def get_has_return_value(self, addr: int) -> bool:
+        symbol = self.get_symbol(addr=addr)
         return symbol.has_return_value if symbol else None
-    
-    def get_func_args_count(self, lexeme: str = None, addr: str = None) -> int:
+
+    def get_func_address(self, lexeme: str, args_count:int) -> int:
+        for symbol in self.alive_symbols:
+            if symbol.lexeme == lexeme and symbol.args_cells == args_count and symbol.category == 'func':
+                return symbol.address
+        return None
+        
+    def get_func_args_count(self, lexeme: str = None, addr: str = None) -> List[int]:
+        possible_args_count = list()
         if lexeme:
-            symbol = self._get_symbol(lexeme=lexeme)
+            for symbol in self.alive_symbols:
+                if symbol.lexeme == lexeme and symbol.category == 'func':
+                    possible_args_count.append(symbol.args_cells)
         elif addr:
-            symbol = self._get_symbol(addr=int(addr))
+            symbol = self.get_symbol(addr=int(addr))
+            possible_args_count.append(symbol.args_cells) if symbol else None
         else:
-            symbol = self._get_symbol(category='func')
-        return symbol.args_cells if symbol else None
+            symbol = self.get_symbol(category='func')
+            possible_args_count.append(symbol.args_cells) if symbol else None
+
+        return possible_args_count
+
+    def is_last_func_valid(self) -> bool:
+        last_func = self.get_symbol(category='func')
+        for symbol in self.alive_symbols:
+            if last_func.address == symbol.address:
+                continue
+            elif last_func.lexeme == symbol.lexeme and last_func.args_cells == symbol.args_cells:
+                return False
+        return True
+
+    def remove_last_func(self) -> None:
+        last_func = self.get_symbol(category='func')
+        args_count = last_func.args_cells
+        for i in range(len(self._symbols)):
+            if self._symbols[i].address == last_func.address:
+                print('HOE', i, self._symbols[i], last_func, sep='\n')
+                self._symbols.pop(i)
+                for _ in range(args_count):
+                    self._symbols.pop(i)
+                return
 
     def kill_block(self, addr: str = None) -> None:
         for symbol in reversed(self._symbols):
