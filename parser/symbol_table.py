@@ -54,7 +54,6 @@ class SymbolTable:
                 return symbol
 
     def find_addr(self, lexeme: str = '') -> int:
-        print([x.lexeme for x in self.alive_symbols], [x.lexeme for x in self._symbols],sep='\n')
         symbol = self.get_symbol(lexeme=lexeme)
         return symbol.address if symbol else None
 
@@ -141,7 +140,6 @@ class SymbolTable:
         args_count = last_func.args_cells
         for i in range(len(self._symbols)):
             if self._symbols[i].address == last_func.address:
-                print('HOE', i, self._symbols[i], last_func, sep='\n')
                 self._symbols.pop(i)
                 for _ in range(args_count):
                     self._symbols.pop(i)
