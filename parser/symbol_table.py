@@ -110,6 +110,11 @@ class SymbolTable:
             if symbol.lexeme == lexeme and symbol.args_cells == args_count and symbol.category == 'func':
                 return symbol.address
         return None
+    
+    def get_first_func_address(self, lexeme: str) -> int:
+        # returns address of first function defined with given lexeme
+        matched_symbols = list(filter(lambda symbol: symbol.lexeme == lexeme and symbol.category == 'func', self.alive_symbols))
+        return matched_symbols[-1].address if matched_symbols else None
         
     def get_func_args_count(self, lexeme: str = None, addr: str = None) -> List[int]:
         possible_args_count = list()

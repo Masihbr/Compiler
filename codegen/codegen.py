@@ -289,7 +289,7 @@ class CodeGenerator:
 
         if args_count_given not in possible_args_count:
             self.error_handler.add(SemanticError.ARGS_MISMATCH, self.lineno, id=func_lexeme)
-            actual_func_address = None # when function does not match given args, its address is no longer valid
+            actual_func_address = self._symbol_table.get_first_func_address(lexeme=func_lexeme)
         else:
             actual_func_address = self._symbol_table.get_func_address(lexeme=func_lexeme, args_count=args_count_given)
             
