@@ -280,23 +280,26 @@ class CodeGenerator:
             self.program_block.append(self.code('PRINT', out))
             return
         
-        func_address = self._semantic_stack.pop()
-        func_lexeme = self._symbol_table.find_lexeme(func_address)
+        assumed_func_address = self._semantic_stack.pop()
+        # this func address has only matched the lexeme of func ID
+        # actual func address may be different depending on number of arguments
+        func_lexeme = self._symbol_table.find_lexeme(assumed_func_address)
         args_count_given = self._args_count.pop()
         possible_args_count = self._symbol_table.get_func_args_count(lexeme=func_lexeme)
 
         if args_count_given not in possible_args_count:
             self.error_handler.add(SemanticError.ARGS_MISMATCH, self.lineno, id=func_lexeme)
+            actual_func_address = None # when function does not match given args, its address is no longer valid
         else:
-            func_address = self._symbol_table.get_func_address(lexeme=func_lexeme, args_count=args_count_given)
+            actual_func_address = self._symbol_table.get_func_address(lexeme=func_lexeme, args_count=args_count_given)
             
-        func_pb_line = self._symbol_table.get_pb_line(addr=func_address)
+        func_pb_line = self._symbol_table.get_pb_line(addr=actual_func_address)
 
         current_pb_line = self.pb_len
         self._func_stack.push(f'#{current_pb_line + 3}')
         self.program_block.append(self.code('JP', func_pb_line))
         
-        return_value = self._func_stack.pop() if self._symbol_table.get_has_return_value(addr=func_address) else None
+        return_value = self._func_stack.pop() if self._symbol_table.get_has_return_value(addr=actual_func_address) else None
         self._semantic_stack.append(return_value)
         
         self._func_stack.pop()

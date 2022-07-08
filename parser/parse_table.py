@@ -57,8 +57,8 @@ PARSE_TABLE = {
     },
     'B': {
         ';': SYNCHRONOUS,
-        '=': ('#add_sym', '=', 'C', '#assign'),  # B -> #add_sym = C #assign
-        '[': ('#check_sym', '[', 'Expression', '#index', ']', '=', 'C', '#assign'),  # B -> #check_sym [ Expression #index ] = C #assign
+        '=': ('#add_sym', '=', 'C', '#check_void', '#assign'),  # B -> #add_sym = C #check_void #assign
+        '[': ('#check_sym', '[', 'Expression', '#index', ']', '=', 'C', '#check_void', '#assign'),  # B -> #check_sym [ Expression #index ] = C #check_void #assign
         '(': ('#check_sym', '#func_call_start', '(', 'Arguments', ')', '#func_call_finish', '#pop'),
         # B -> #check_sym #func_call_start ( Arguments ) #func_call_finish #pop
     },
